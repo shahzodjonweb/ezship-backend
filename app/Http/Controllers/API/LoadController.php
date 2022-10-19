@@ -30,10 +30,16 @@ class LoadController extends BaseController
     public function store(Request $request)
     {
         $input = $request->all();
-   
         $validator = Validator::make($input, [
             'type' => 'required',
-            'status' => 'required'
+            'status' => 'string | required',
+            'description' => 'nullable',
+            'phone' => 'string | required',
+            'initial_price' => 'numeric | between:0,99999.99',
+            'pickup_address' => 'string | required',
+            'pickup_date' => 'date | required',
+            'delivery_address' => 'string | required',
+            'delivery_date' => 'date | required',
         ]);
    
         if($validator->fails()){
@@ -71,20 +77,33 @@ class LoadController extends BaseController
      */
     public function update(Request $request, Load $load)
     {
-        $input = $request->all();
-   
         $validator = Validator::make($input, [
             'type' => 'required',
-            'status' => 'required'
+            'status' => 'string | required',
+            'description' => 'nullable',
+            'phone' => 'string | required',
+            'initial_price' => 'numeric | between:0,99999.99',
+            'pickup_address' => 'string | required',
+            'pickup_date' => 'date | required',
+            'delivery_address' => 'string | required',
+            'delivery_date' => 'date | required',
         ]);
    
         if($validator->fails()){
             return $this->sendError('Validation Error.', $validator->errors());       
         }
    
-        $load->type = $input['type'];
-        $load->status = $input['status'];
-        $load->save();
+        $load = User::where("user_id", $id)->update([
+            "type" => $request->type,
+            "status" => $request->status,
+            "description" => $request->description,
+            "phone" => $request->phone,
+            "initial_price" => $request->initial_price,
+            "pickup_address" => $request->pickup_address,
+            "pickup_date" => $request->pickup_date,
+            "delivery_address" => $request->delivery_address,
+            "delivery_date" => $request->delivery_date,
+        ]);
    
         return $this->sendResponse(new LoadResource($load), 'Load updated successfully.');
     }
@@ -98,7 +117,6 @@ class LoadController extends BaseController
     public function destroy(Load $load)
     {
         $load->delete();
-   
         return $this->sendResponse([], 'Load deleted successfully.');
     }
 }
