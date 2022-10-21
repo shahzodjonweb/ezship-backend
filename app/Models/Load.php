@@ -11,7 +11,8 @@ class Load extends Model
     use HasFactory, UUID;
 
     protected $fillable = [
-        'type', 
+        'type',
+        'status',
         'description',
         'phone',
         'initial_price',
@@ -24,5 +25,9 @@ class Load extends Model
     public function categories()
     {
         return $this->hasMany(Category::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\API;
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\Load;
+use App\Models\Category;
 use Validator;
+use Auth;
 use App\Http\Resources\Load as LoadResource;
    
 class LoadController extends BaseController
@@ -29,25 +31,11 @@ class LoadController extends BaseController
      */
     public function store(Request $request)
     {
-        $input = $request->all();
-        $validator = Validator::make($input, [
-            'type' => 'required',
-            'status' => 'string | required',
-            'description' => 'nullable',
-            'phone' => 'string | required',
-            'initial_price' => 'numeric | between:0,99999.99',
-            'pickup_address' => 'string | required',
-            'pickup_date' => 'date | required',
-            'delivery_address' => 'string | required',
-            'delivery_date' => 'date | required',
-        ]);
-   
-        if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
-        }
-   
-        $load = Load::create($input);
-   
+        
+        $load = new Load;
+        $load -> user_id = Auth::user()->id;
+        $load -> status = 'initial';
+        $load -> save();
         return $this->sendResponse(new LoadResource($load), 'Load created successfully.');
     } 
    
@@ -77,33 +65,43 @@ class LoadController extends BaseController
      */
     public function update(Request $request, Load $load)
     {
+        $input = $request->all();
+
         $validator = Validator::make($input, [
-            'type' => 'required',
-            'status' => 'string | required',
-            'description' => 'nullable',
-            'phone' => 'string | required',
+            'status' => 'string',
+            'phone' => 'string',
             'initial_price' => 'numeric | between:0,99999.99',
-            'pickup_address' => 'string | required',
-            'pickup_date' => 'date | required',
-            'delivery_address' => 'string | required',
-            'delivery_date' => 'date | required',
+            'pickup_address' => 'string',
+            'pickup_date' => 'date',
+            'delivery_address' => 'string',
+            'delivery_date' => 'date',
         ]);
    
         if($validator->fails()){
             return $this->sendError('Validation Error.', $validator->errors());       
         }
-   
-        $load = User::where("user_id", $id)->update([
-            "type" => $request->type,
-            "status" => $request->status,
-            "description" => $request->description,
-            "phone" => $request->phone,
-            "initial_price" => $request->initial_price,
-            "pickup_address" => $request->pickup_address,
-            "pickup_date" => $request->pickup_date,
-            "delivery_address" => $request->delivery_address,
-            "delivery_date" => $request->delivery_date,
-        ]);
+        $load->update($input);
+
+        if($request->has('categories')){
+           $oldCategories = $load->categories;
+           $newCategories = $request->categories;
+                foreach($newCategories as $category){
+                    $isExist = false;
+                    foreach($oldCategories as $oldCategory){
+                        if($category['name'] == $oldCategory['name']){
+                            $oldCategory->update($category);
+                            $isExist = true;
+                        }
+                    }
+                    if(!$isExist){
+                        $newCategory = new Category;
+                        $newCategory->load_id = $load->id;
+                        $newCategory->name = $category['name'];
+                        $newCategory->value = $category['value'];
+                        $newCategory->save();
+                    }
+                }
+        }
    
         return $this->sendResponse(new LoadResource($load), 'Load updated successfully.');
     }

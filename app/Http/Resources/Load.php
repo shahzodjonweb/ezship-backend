@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\Category as CategoryResource;
 
 class Load extends JsonResource
 {
@@ -25,6 +26,7 @@ class Load extends JsonResource
             'pickup_date'=> $this->pickup_date,
             'delivery_address'=> $this->delivery_address,
             'delivery_date'=> $this->delivery_date,
+            'categories' =>  CategoryResource::collection($this->categories),
             'created_at' => $this->created_at->format('d/m/Y'),
             'updated_at' => $this->updated_at->format('d/m/Y'),
         ];
