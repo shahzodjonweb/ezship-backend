@@ -21,10 +21,6 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->double('initial_price')->nullable()->default(0.00);
             $table->double('confirmed_price')->nullable();
-            $table->string('pickup_address')->nullable();
-            $table->date('pickup_date')->nullable();
-            $table->string('delivery_address')->nullable();
-            $table->date('delivery_date')->nullable();
             $table->string('phone')->nullable();
             $table->timestamps();
         });

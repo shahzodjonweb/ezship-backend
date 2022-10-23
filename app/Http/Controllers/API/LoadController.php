@@ -5,7 +5,9 @@ namespace App\Http\Controllers\API;
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\Load;
+use App\Models\Location;
 use App\Models\Category;
+
 use Validator;
 use Auth;
 use App\Http\Resources\Load as LoadResource;
@@ -70,12 +72,12 @@ class LoadController extends BaseController
         $validator = Validator::make($input, [
             'status' => 'string',
             'phone' => 'string',
-            'initial_price' => 'numeric | between:0,99999.99',
-            'pickup_address' => 'string',
-            'pickup_date' => 'date',
-            'delivery_address' => 'string',
-            'delivery_date' => 'date',
+            'initial_price' => 'numeric | between:0,99999.99'
         ]);
+
+
+
+
    
         if($validator->fails()){
             return $this->sendError('Validation Error.', $validator->errors());       
@@ -102,6 +104,30 @@ class LoadController extends BaseController
                     }
                 }
         }
+
+        if($request->has('locations')){
+            $old_locations = $load->locations;
+            $new_locations = $request->locations;
+                 foreach($new_locations as $key1=>$location){
+                     $isExist = false;
+                     foreach($old_locations as $key2=>$old_location){
+                         if($key1 == $key2){
+                             $old_location->update($location);
+                             $isExist = true;
+                         }
+                     }
+                     if(!$isExist){
+                         $new_location = new Location;
+                         $new_location->load_id = $load->id;
+                         $new_location->address = $location['address'];
+                         $new_location->city = $location['city'];
+                         $new_location->state = $location['state'];
+                         $new_location->zip = $location['zip'];
+                         $new_location->date = $location['date'];
+                         $new_location->save();
+                     }
+                 }
+         }
    
         return $this->sendResponse(new LoadResource($load), 'Load updated successfully.');
     }

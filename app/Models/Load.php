@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\UUID;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\UUID;
 
 class Load extends Model
 {
@@ -15,17 +15,18 @@ class Load extends Model
         'status',
         'description',
         'phone',
-        'initial_price',
-        'pickup_address',
-        'pickup_date',
-        'delivery_address',
-        'delivery_date',
+        'initial_price'
     ];
 
     public function categories()
     {
         return $this->hasMany(Category::class);
     }
+    public function locations()
+    {
+        return $this->hasMany(Location::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
