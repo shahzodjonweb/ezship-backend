@@ -21,8 +21,7 @@ class LoadController extends BaseController
      */
     public function index()
     {
-        $loads = Load::all();
-    
+        $loads =Auth::user()->loads;
         return $this->sendResponse(LoadResource::collection($loads), 'Loads retrieved successfully.');
     }
     /**
