@@ -19,9 +19,9 @@ class LoadController extends BaseController
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $loads =Auth::user()->loads;
+        $loads =Auth::user()->loads->where('status', $request['status'])->get();
         return $this->sendResponse(LoadResource::collection($loads), 'Loads retrieved successfully.');
     }
     /**
