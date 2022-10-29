@@ -21,7 +21,10 @@ class LoadController extends BaseController
      */
     public function index(Request $request)
     {
-        $loads =Auth::user()->loads->where('status', $request['status']);
+        $loads =Auth::user()->loads;
+        if($request['status']){
+            $loads =$loads->where('status', $request['status']);
+        }
         return $this->sendResponse(LoadResource::collection($loads), 'Loads retrieved successfully.');
     }
     /**
