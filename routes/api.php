@@ -18,6 +18,7 @@ use App\Http\Controllers\API\GoogleLoginController;
 |
 */
 
+Route::post('account', [RegisterController::class, 'account'])->middleware('auth:api');
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('login', [RegisterController::class, 'login']);
 

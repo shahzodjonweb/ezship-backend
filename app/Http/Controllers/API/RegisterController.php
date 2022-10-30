@@ -15,6 +15,10 @@ class RegisterController extends BaseController
      *
      * @return \Illuminate\Http\Response
      */
+    public function account(){
+        $user = Auth::user();
+        return $this->sendResponse($user, 'User retrieved successfully.');
+    }
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
