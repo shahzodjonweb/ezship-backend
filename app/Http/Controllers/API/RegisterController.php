@@ -17,6 +17,7 @@ class RegisterController extends BaseController
      */
     public function account(){
         $user = Auth::user();
+        $user -> loads_count = $user->loads->count();
         return $this->sendResponse($user, 'User retrieved successfully.');
     }
     public function register(Request $request)
