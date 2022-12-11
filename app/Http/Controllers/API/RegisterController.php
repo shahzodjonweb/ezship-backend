@@ -17,16 +17,16 @@ class RegisterController extends BaseController
      */
     public function account(){
         $user = Auth::user();
-        $user -> loads_count = $user->loads->count();
+        $user -> loads_count = $user->loads->where('status', '!=', 'initial')->count();
         return $this->sendResponse($user, 'User retrieved successfully.');
     }
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
-            'email' => 'required|email',
-            'password' => 'required',
-            'c_password' => 'required|same:password',
+            'email' => 'required|email|unique:users,email',
+            'password1' => 'required',
+            'password2' => 'required|same:password1',
         ]);
    
         if($validator->fails()){
@@ -34,10 +34,11 @@ class RegisterController extends BaseController
         }
    
         $input = $request->all();
-        $input['password'] = bcrypt($input['password']);
+        $input['password'] = bcrypt($input['password1']);
         $user = User::create($input);
         $success['token'] =  $user->createToken('MyApp')->accessToken;
         $success['name'] =  $user->name;
+        $success['email'] =  $user->email;
    
         return $this->sendResponse($success, 'User register successfully.');
     }

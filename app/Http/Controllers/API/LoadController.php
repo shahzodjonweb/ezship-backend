@@ -21,7 +21,7 @@ class LoadController extends BaseController
      */
     public function index(Request $request)
     {
-        $loads =Load::where('user_id',Auth::user()->id)
+        $loads =Load::where('user_id',Auth::user()->id)->where('status', '!=', 'initial')
         ->orderBy('created_at','DESC')->get();
         if($request['status']){
             $loads =$loads->where('status', $request['status']);
