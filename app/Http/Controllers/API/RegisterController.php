@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
    
 use Illuminate\Http\Request;
+use Illuminate\Auth\Events\Registered;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -36,6 +37,7 @@ class RegisterController extends BaseController
         $input = $request->all();
         $input['password'] = bcrypt($input['password1']);
         $user = User::create($input);
+        event(new Registered($user));
         $success['token'] =  $user->createToken('MyApp')->accessToken;
         $success['name'] =  $user->name;
         $success['email'] =  $user->email;

@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\RegisterController;
 use App\Http\Controllers\API\LoadController;
 use App\Http\Controllers\API\GoogleLoginController;
+use App\Http\Controllers\API\VerificationController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -26,3 +28,10 @@ Route::post('google/login', [GoogleLoginController::class, 'login']);
 Route::middleware('auth:api')->group( function () {
     Route::resource('loads', LoadController::class);
 });
+
+Route::get('/email/verify', 'VerificationController@show')->name('verification.notice');
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+    return redirect('/home');
+})->middleware(['auth', 'signed'])->name('verification.verify');
+Route::post('/email/resend', 'VerificationController@resend')->name('verification.resend');
