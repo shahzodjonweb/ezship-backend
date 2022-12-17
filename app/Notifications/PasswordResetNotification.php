@@ -44,7 +44,7 @@ class PasswordResetNotification extends Notification
         $url = env('SPA_URL','https://app.shipio.app').'/reset-password?token='.$this->token.'&email='.$notifiable->email;
         return (new MailMessage)
         ->subject('Reset Password')
-        ->greeting('Hi '.$notifiable->name)
+        ->greeting('Hi '.$notifiable->name .',')
             ->line('You are receiving this email because we received a password reset request for your account. Click button below to reset your password:') 
             ->action('Reset password', $url)
             ->line('Thank you for using EZSHIP!');

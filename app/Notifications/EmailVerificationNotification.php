@@ -47,7 +47,7 @@ class EmailVerificationNotification extends VerifyEmail
 
         return (new MailMessage)
         ->subject('Verify Email Address')
-        ->greeting('Hello!')
+        ->greeting('Hi '.$notifiable->name .',')
             ->line('Thanks for registering for an account on EZSHIP! Before we get started, we just need to confirm that this is you. Click below to verify your email address:')
             ->action('Verify Email', $prefix . urlencode($verificationUrl))
             ->line('Thank you for using EZSHIP!');
