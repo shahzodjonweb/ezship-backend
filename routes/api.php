@@ -25,13 +25,10 @@ Route::post('register', [RegisterController::class, 'register']);
 Route::post('login', [RegisterController::class, 'login']);
 
 Route::post('google/login', [GoogleLoginController::class, 'login']);
-Route::middleware('auth:api')->group( function () {
+Route::middleware(['auth:api','verified'])->group( function () {
     Route::resource('loads', LoadController::class);
 });
 
-Route::get('/email/verify', 'VerificationController@show')->name('verification.notice');
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
-    return redirect('/home');
-})->middleware(['auth', 'signed'])->name('verification.verify');
-Route::post('/email/resend', 'VerificationController@resend')->name('verification.resend');
+Route::get('/email/verify',[VerificationController::class, 'show'])->name('verification.notice');
+Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify');
+Route::post('/email/resend', [VerificationController::class, 'resend'])->name('verification.resend');

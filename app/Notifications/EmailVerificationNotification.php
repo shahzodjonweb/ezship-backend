@@ -42,13 +42,14 @@ class EmailVerificationNotification extends VerifyEmail
      */
     public function toMail($notifiable)
     {
-        $prefix = 'https://shiny-entremet-ec1569.netlify.app/verify-email?url=';
+        $prefix = 'http://localhost:3000/verify-email?url=';
         $verificationUrl = $this->verificationUrl($notifiable);
 
         return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Notification Action', $prefix . urlencode($verificationUrl))
-            ->line('Thank you for using our application!');
+        ->subject('Verify Email Address')
+            ->line('Thanks for registering for an account on EZSHIP! Before we get started, we just need to confirm that this is you. Click below to verify your email address:')
+            ->action('Verify Email', $prefix . urlencode($verificationUrl))
+            ->line('Thank you for using EZSHIP!');
     }
 
     /**

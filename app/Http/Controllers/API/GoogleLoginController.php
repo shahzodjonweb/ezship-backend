@@ -30,6 +30,7 @@ class GoogleLoginController extends BaseController
                 $input['name'] = $googleUser->name;
                 $input['email'] = $googleUser->email;
                 $input['avatar'] =  $googleUser->avatar;
+                $input['email_verified_at'] = now();
                 $input['password'] = bcrypt('you_cannot_find_this_password');
                 $newUser = User::create($input);
                 $success['token'] =  $newUser->createToken('MyApp')->accessToken;

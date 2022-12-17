@@ -1,12 +1,17 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
 use Illuminate\Http\Request;
-use Illuminate\Foundation\Auth\RedirectsUsers;
-use Illuminate\Foundation\Auth\VerifiesEmails;
+use App\Http\Controllers\API\BaseController as BaseController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Auth\Events\Verified;
 
-class VerificationController extends Controller
+
+
+class VerificationController extends BaseController
 {
     /*
     |--------------------------------------------------------------------------
@@ -19,7 +24,6 @@ class VerificationController extends Controller
     |
     */
 
-    use VerifiesEmails, RedirectsUsers;
 
     /**
      * Where to redirect users after verification.
@@ -35,8 +39,6 @@ class VerificationController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth');
-        $this->middleware('signed')->only('verify');
         $this->middleware('throttle:6,1')->only('verify', 'resend');
     }
 
@@ -57,14 +59,20 @@ class VerificationController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function verify(Request $request)
+    public function verify(Request  $request)
     {
-      $userID = $request[‘id’];
-      $user = User::findOrFail($userID);
-      $user->email_verified_at = date("Y-m-d g:i:s");
-      $user->save();
-
-      return response()->json('Email verified!');
+        $user = User::find($request->route('id'));
+        if ($user->hasVerifiedEmail()) {
+            $success['verified'] =  true;
+            return $this->sendResponse($success, 'Given email is already verified.');
+          }
+      
+          if ($user->markEmailAsVerified()) {
+            event(new Verified($user));
+          }
+      
+          $success['verified'] =  true;
+          return $this->sendResponse($success, 'Verification complete.');
     }
 
     /**
@@ -75,14 +83,26 @@ class VerificationController extends Controller
      */
     public function resend(Request $request)
     {
-        if ($request->user()->hasVerifiedEmail()) {
-            return response()->json('The email is already verified.', 422);
+        $user = User::where('email' , $request->email)->first();;
+        if (!$user) {
+            $error['verified'] =  false;
+            return $this->sendError( 'Given email is not registered.', $error);
+        }
+        if ( $user->hasVerifiedEmail()) {
+            $success['verified'] =  true;
+            return $this->sendResponse($success, 'Given email is already verified.');
         }
 
-        $request->user()->sendEmailVerificationNotification();
+         $user->sendEmailVerificationNotification();
 
-        return response()->json('We have e-mailed your verification link!');
+        $success['verified'] =  false;
+        return $this->sendResponse($success, 'Verification email sent.');
     }
+
+
+
+
+
 
 
 }
