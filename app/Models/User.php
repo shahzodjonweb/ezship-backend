@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Notifications\EmailVerificationNotification;
+use App\Notifications\PasswordResetNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -11,7 +13,7 @@ use Laravel\Passport\HasApiTokens;
 use App\Traits\UUID;
 
 
-class User extends Authenticatable  implements MustVerifyEmail
+class User extends Authenticatable  implements MustVerifyEmail,CanResetPassword
 {
     use HasApiTokens, HasFactory, Notifiable, UUID;
 
@@ -54,8 +56,12 @@ class User extends Authenticatable  implements MustVerifyEmail
       // Method to send email verification
     public function sendEmailVerificationNotification()
     {
-        // We override the default notification and will use our own
         $this->notify(new EmailVerificationNotification());
+    }
+    // Method to send password reset notification
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new PasswordResetNotification($token));
     }
 
 }

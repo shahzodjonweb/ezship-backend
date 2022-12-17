@@ -8,6 +8,7 @@ use App\Http\Controllers\API\RegisterController;
 use App\Http\Controllers\API\LoadController;
 use App\Http\Controllers\API\GoogleLoginController;
 use App\Http\Controllers\API\VerificationController;
+use App\Http\Controllers\API\PasswordResetRequestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,3 +33,5 @@ Route::middleware(['auth:api','verified'])->group( function () {
 Route::get('/email/verify',[VerificationController::class, 'show'])->name('verification.notice');
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify');
 Route::post('/email/resend', [VerificationController::class, 'resend'])->name('verification.resend');
+Route::post('/forgot-password', [PasswordResetRequestController::class , 'sendPasswordResetEmail'])->middleware('guest')->name('password.email');
+Route::post('/reset-password', [PasswordResetRequestController::class , 'resetPassword'])->middleware('guest')->name('password.update');

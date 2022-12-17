@@ -6,21 +6,19 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Auth\Notifications\VerifyEmail;
 
-
-class EmailVerificationNotification extends VerifyEmail
+class PasswordResetNotification extends Notification
 {
     use Queueable;
-
+    public $token;
     /**
-     * Create a new notification instance.
+     * Create a new message instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($token)
     {
-        //
+        $this->token = $token;
     }
 
     /**
@@ -40,16 +38,15 @@ class EmailVerificationNotification extends VerifyEmail
      * @param  mixed  $notifiable
      * @return \Illuminate\Notifications\Messages\MailMessage
      */
+    
     public function toMail($notifiable)
     {
-        $prefix = env('SPA_URL','https://app.shipio.app').'/verify-email?url=';
-        $verificationUrl = $this->verificationUrl($notifiable);
-
+        $url = env('SPA_URL','https://app.shipio.app').'/reset-password?token='.$this->token.'&email='.$notifiable->email;
         return (new MailMessage)
-        ->subject('Verify Email Address')
-        ->greeting('Hello!')
-            ->line('Thanks for registering for an account on EZSHIP! Before we get started, we just need to confirm that this is you. Click below to verify your email address:')
-            ->action('Verify Email', $prefix . urlencode($verificationUrl))
+        ->subject('Reset Password')
+        ->greeting('Hi '.$notifiable->name)
+            ->line('You are receiving this email because we received a password reset request for your account. Click button below to reset your password:') 
+            ->action('Reset password', $url)
             ->line('Thank you for using EZSHIP!');
     }
 
