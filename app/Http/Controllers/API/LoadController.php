@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\Load;
-use App\Models\Type;
 use App\Models\Location;
 use App\Models\Category;
 
@@ -58,7 +57,7 @@ class LoadController extends BaseController
 
         $newTypes = $request->categories;
         foreach($newTypes as $type){
-               $newType = new Type;
+               $newType = new Category;
                $newType->load_id = $load->id;
                $newType->name = $type['name'];
                $newType->value = $type['value'];
@@ -132,7 +131,7 @@ class LoadController extends BaseController
                  }
               }
               if(!$isExist){
-                 $newType = new Type;
+                 $newType = new Category;
                  $newType->load_id = $load->id;
                  $newType->name = $type['name'];
                  $newType->value = $type['value'];
