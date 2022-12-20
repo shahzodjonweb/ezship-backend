@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('city')->nullable();
             $table->string('state')->nullable();
             $table->string('zip')->nullable();
+            $table->string('lat')->nullable();
+            $table->string('lon')->nullable();
             $table->date('date')->nullable();
             $table->timestamps();
         });

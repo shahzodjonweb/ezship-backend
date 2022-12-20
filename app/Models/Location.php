@@ -10,7 +10,7 @@ class Location extends Model
     use HasFactory;
 
     protected $fillable = [
-        'address', 'city', 'state', 'zip', 'date'
+        'address', 'city', 'state', 'zip', 'date','lat','lon'
     ];
     public function post()
     {
