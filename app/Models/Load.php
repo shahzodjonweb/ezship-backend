@@ -15,7 +15,8 @@ class Load extends Model
         'status',
         'description',
         'phone',
-        'initial_price'
+        'initial_price',
+        'counter_price'
     ];
 
     public function categories()

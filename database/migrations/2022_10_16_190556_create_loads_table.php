@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('status')->nullable();
             $table->text('description')->nullable();
             $table->double('initial_price')->nullable()->default(0.00);
-            $table->double('confirmed_price')->nullable();
+            $table->double('counter_price')->nullable();
             $table->string('phone')->nullable();
             $table->timestamps();
         });

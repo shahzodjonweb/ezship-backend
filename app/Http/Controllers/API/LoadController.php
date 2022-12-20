@@ -134,7 +134,17 @@ class LoadController extends BaseController
    
         return $this->sendResponse(new LoadResource($load), 'Load updated successfully.');
     }
-   
+   public function handleCounterRate($id , Request $request){
+        $load = Load::find($id);
+        if($request['action'] == 'accept'){
+            $load->initial_price = $load -> counter_price;
+            $load->status = 'accepted';
+        }else if($request['action'] == 'reject'){
+            $load->status = 'rejected';
+        }
+        $load->save();
+        return $this->sendResponse(new LoadResource($load), 'Load updated successfully.');
+   }
     /**
      * Remove the specified resource from storage.
      *

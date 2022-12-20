@@ -23,6 +23,7 @@ class Load extends JsonResource
             'description' => $this->description,
             'phone' => $this->phone,
             'initial_price' => $this->initial_price,
+            'counter_price' => $this->counter_price,
             'categories' => CategoryResource::collection($this->categories),
             'locations' => LocationResource::collection($this->locations),
             'created_at' => $this->created_at->format('d/m/Y'),
