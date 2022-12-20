@@ -36,10 +36,47 @@ class LoadController extends BaseController
      */
     public function store(Request $request)
     {
-        
+        $validator = Validator::make($request->all(), [
+            'status' => 'string',
+            'phone' => 'string',
+            'initial_price' => 'numeric | between:0,99999.99'
+        ]);
+
+        if($validator->fails()){
+            return $this->sendError('Validation Error.', $validator->errors());       
+        }
+     
         $load = new Load;
         $load -> user_id = Auth::user()->id;
-        $load -> status = 'initial';
+        $load -> status = 'pending';
+        $load -> type = $request->type;
+        $load -> description = $request->description;
+        $load -> phone = $request->phone;
+        $load -> initial_price = $request->initial_price;
+        $load -> save();
+
+        $newTypes = $request->types;
+        foreach($newTypes as $type){
+               $newType = new Type;
+               $newType->load_id = $load->id;
+               $newType->name = $type['name'];
+               $newType->value = $type['value'];
+               $newType->save();
+        }
+        $locations = $request->locations;
+        foreach($locations as $location){
+                $new_location = new Location;
+                $new_location->load_id = $load->id;
+                $new_location->address = $location['address'];
+                $new_location->city = $location['city'];
+                $new_location->state = $location['state'];
+                $new_location->zip = $location['zip'];
+                $new_location->date = $location['date'];
+                $new_location->lat = $location['lat'];
+                $new_location->lon = $location['lon'];
+                $new_location->save();
+        }
+
         $load -> save();
         return $this->sendResponse(new LoadResource($load), 'Load created successfully.');
     } 
@@ -78,34 +115,29 @@ class LoadController extends BaseController
             'initial_price' => 'numeric | between:0,99999.99'
         ]);
 
-
-
-
-   
         if($validator->fails()){
             return $this->sendError('Validation Error.', $validator->errors());       
         }
         $load->update($input);
-
-        if($request->has('categories')){
-           $oldCategories = $load->categories;
-           $newCategories = $request->categories;
-                foreach($newCategories as $category){
-                    $isExist = false;
-                    foreach($oldCategories as $oldCategory){
-                        if($category['name'] == $oldCategory['name']){
-                            $oldCategory->update($category);
-                            $isExist = true;
-                        }
-                    }
-                    if(!$isExist){
-                        $newCategory = new Category;
-                        $newCategory->load_id = $load->id;
-                        $newCategory->name = $category['name'];
-                        $newCategory->value = $category['value'];
-                        $newCategory->save();
-                    }
-                }
+        if($request->has('types')){
+           $oldTypes = $load->types;
+           $newTypes = $request->types;
+           foreach($newTypes as $type){
+              $isExist = false;
+              foreach($oldTypes as $oldType){
+                 if($type['name'] == $oldType->name){
+                    $oldType->update($type);
+                    $isExist = true;
+                 }
+              }
+              if(!$isExist){
+                 $newType = new Type;
+                 $newType->load_id = $load->id;
+                 $newType->name = $type['name'];
+                 $newType->value = $type['value'];
+                 $newType->save();
+              }
+           }
         }
 
         if($request->has('locations')){
