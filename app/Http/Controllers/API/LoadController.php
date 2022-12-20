@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\Load;
+use App\Models\Type;
 use App\Models\Location;
 use App\Models\Category;
 
