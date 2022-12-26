@@ -3,7 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Http\Resources\Category as CategoryResource;
-use App\Http\Resources\Location as LocationResource;
+use App\Http\Resources\Stop as StopResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class Load extends JsonResource
@@ -25,7 +25,7 @@ class Load extends JsonResource
             'initial_price' => $this->initial_price,
             'counter_price' => $this->counter_price,
             'categories' => CategoryResource::collection($this->categories),
-            'locations' => LocationResource::collection($this->locations),
+            'locations' => StopResource::collection($this->stops),
             'created_at' => $this->created_at->format('d/m/Y'),
             'updated_at' => $this->updated_at->format('d/m/Y'),
         ];

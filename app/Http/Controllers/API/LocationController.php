@@ -4,10 +4,8 @@ namespace App\Http\Controllers\API;
    
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
-use App\Models\Load;
 use App\Models\Location;
 use App\Models\Category;
-use App\Models\Stop;
 
 use Validator;
 use Auth;
@@ -46,10 +44,9 @@ class LoadController extends BaseController
         if($validator->fails()){
             return $this->sendError('Validation Error.', $validator->errors());       
         }
-        $user_id = Auth::user()->id;
      
         $load = new Load;
-        $load -> user_id = $user_id;
+        $load -> user_id = Auth::user()->id;
         $load -> status = 'pending';
         $load -> type = $request->type;
         $load -> description = $request->description;
@@ -67,24 +64,16 @@ class LoadController extends BaseController
         }
         $locations = $request->locations;
         foreach($locations as $location){
-            // create location 
-               $new_location = new Location;
-                $new_location -> user_id = $user_id;
+                $new_location = new Location;
+                $new_location->load_id = $load->id;
                 $new_location->address = $location['address'];
                 $new_location->city = $location['city'];
                 $new_location->state = $location['state'];
                 $new_location->zip = $location['zip'];
+                $new_location->date = $location['date'];
                 $new_location->lat = $location['lat'];
                 $new_location->lon = $location['lon'];
                 $new_location->save();
-                // create stop corresponding to location and load id
-                $new_stop = new Stop;
-                $new_stop -> user_id = $user_id;
-                $new_stop->load_id = $load->id;
-                $new_stop->location_id = $new_location->id;
-                $new_stop->date = $location['date'];
-                $new_stop->save();
-
         }
 
         $load -> save();

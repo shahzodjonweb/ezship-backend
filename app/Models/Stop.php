@@ -6,20 +6,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\UUID;
 
-class Location extends Model
+class Stop extends Model
 {
-    use HasFactory, UUID;
-
+    use HasFactory , UUID;
     protected $fillable = [
-       'address', 'city', 'state', 'zip','lat','lon'
+       'id','date'
     ];
-     public function stops()
+     public function location()
     {
-        return $this->hasMany(Stop::class);
+        return $this->belongsTo(Location::class);
     }
       public function user()
     {
         return $this->belongsTo(User::class);
     }
-    
+    public function load()
+    {
+        return $this->belongsTo(Load::class);
+    }
 }

@@ -23,9 +23,9 @@ class Load extends Model
     {
         return $this->hasMany(Category::class);
     }
-    public function locations()
+    public function stops()
     {
-        return $this->hasMany(Location::class);
+        return $this->hasMany(Stop::class);
     }
 
     public function user()
