@@ -56,8 +56,8 @@ class LoadController extends BaseController
         $load -> phone = $request->phone;
         $load -> initial_price = $request->initial_price;
         $load -> save();
-
         $newTypes = $request->categories;
+        // dd($request->categories);
         foreach($newTypes as $type){
                $newType = new Category;
                $newType->load_id = $load->id;

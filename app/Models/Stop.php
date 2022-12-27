@@ -20,7 +20,7 @@ class Stop extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function load()
+    public function stop_load()
     {
         return $this->belongsTo(Load::class);
     }

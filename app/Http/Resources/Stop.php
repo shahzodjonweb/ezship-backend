@@ -16,7 +16,7 @@ class Stop extends JsonResource
      */
     public function toArray($request)
     {
-        $stop_location =  LocationResource::collection($this->location);
+        $stop_location = new  LocationResource($this->location);
         return [
             'id' => $this->id,
             'address' => $stop_location->address,
