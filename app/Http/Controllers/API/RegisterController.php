@@ -8,7 +8,8 @@ use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Validator;
-   
+use App\Http\Resources\User as UserResource;
+
 class RegisterController extends BaseController
 {
     /**
@@ -18,8 +19,7 @@ class RegisterController extends BaseController
      */
     public function account(){
         $user = Auth::user();
-        $user -> loads_count = $user->loads->where('status', '!=', 'initial')->count();
-        return $this->sendResponse($user, 'User retrieved successfully.');
+        return $this->sendResponse( new UserResource($user), 'User retrieved successfully.');
     }
     public function register(Request $request)
     {

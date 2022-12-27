@@ -9,6 +9,8 @@ use App\Http\Controllers\API\LoadController;
 use App\Http\Controllers\API\GoogleLoginController;
 use App\Http\Controllers\API\VerificationController;
 use App\Http\Controllers\API\PasswordResetRequestController;
+use App\Http\Controllers\API\LocationController;
+use App\Http\Controllers\API\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,3 +38,7 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
 Route::post('/email/resend', [VerificationController::class, 'resend'])->name('verification.resend');
 Route::post('/forgot-password', [PasswordResetRequestController::class , 'sendPasswordResetEmail'])->middleware('guest')->name('password.email');
 Route::post('/reset-password', [PasswordResetRequestController::class , 'resetPassword'])->middleware('guest')->name('password.update');
+
+Route::patch('/location/{id}', [LocationController::class, 'update'])->middleware('auth:api');
+Route::patch('/account', [UserController::class, 'update'])->middleware('auth:api');
+Route::post('/account/company', [UserController::class, 'updateCompany'])->middleware('auth:api');
