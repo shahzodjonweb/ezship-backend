@@ -7,8 +7,6 @@ use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
-use App\Http\Resources\User as UserResource;
-
 use Validator;
    
 class GoogleLoginController extends BaseController
@@ -37,7 +35,7 @@ class GoogleLoginController extends BaseController
                 $newUser = User::create($input);
                 $success['token'] =  $newUser->createToken('MyApp')->accessToken;
                 $success['name'] =  $newUser->name;
-                return $this->sendResponse( new UserResource($newUser), 'User register successfully.');    
+                return $this->sendResponse($success, 'User register successfully.');    
             }
         } else {
             return $this->sendError('Unauthorised.', ['error'=>'Unauthorised']);
