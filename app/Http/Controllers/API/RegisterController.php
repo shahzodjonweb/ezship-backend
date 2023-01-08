@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Validator;
 use App\Http\Resources\User as UserResource;
+use App\Http\Controllers\API\QuickBooksController;
 
 class RegisterController extends BaseController
 {
@@ -37,6 +38,7 @@ class RegisterController extends BaseController
         $input = $request->all();
         $input['password'] = bcrypt($input['password1']);
         $user = User::create($input);
+        $result = (new QuickBooksController)->createCustomer($user);
         event(new Registered($user));
         $success['token'] =  $user->createToken('MyApp')->accessToken;
         $success['name'] =  $user->name;

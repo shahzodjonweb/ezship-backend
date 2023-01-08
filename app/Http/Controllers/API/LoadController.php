@@ -12,7 +12,8 @@ use App\Models\Stop;
 use Validator;
 use Auth;
 use App\Http\Resources\Load as LoadResource;
-   
+use App\Http\Controllers\API\QuickBooksController;
+
 class LoadController extends BaseController
 {
     /**
@@ -88,6 +89,7 @@ class LoadController extends BaseController
         }
 
         $load -> save();
+        $result = (new QuickBooksController)->createInvoice(new LoadResource($load));
         return $this->sendResponse(new LoadResource($load), 'Load created successfully.');
     } 
    
@@ -104,7 +106,7 @@ class LoadController extends BaseController
         if (is_null($load)) {
             return $this->sendError('Load not found.');
         }
-   
+
         return $this->sendResponse(new LoadResource($load), 'Load retrieved successfully.');
     }
     

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
    
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
-use App\Models\Location;
+use App\Models\User;
 use App\Models\Category;
 use App\Models\Credential;
 use Illuminate\Support\Facades\Http;
@@ -33,7 +33,7 @@ class QuickBooksController extends BaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function createCustomer( Request $request)
+    public function createCustomer($request)
     {
        $quickbookAuth = $this->refreshToken();
          $response = Http::withHeaders([
@@ -46,10 +46,21 @@ class QuickBooksController extends BaseController
                     'Address' => $request->email
                 ],
             ]);
+        $user = User::find($request->id);
+        $user->quickbooks_id = $response['Customer']['Id'];
+        $user->save();
         return $response;
     }
-    public function createInvoice( Request $request)
+    public function createInvoice( $request)
     {
+        error_log(json_encode($request));
+        $load = json_decode(json_encode($request));
+        //get last 8 chars of id
+        $reference = substr($load->id, -8);
+        $shipper = $load ->locations[0];
+        $receiver = $load ->locations[1];
+        $pick_up = $shipper->address.', '.$shipper->city.', '.$shipper->state;
+        $drop_off = $receiver->address.', '.$receiver->city.', '.$receiver->state;
         $quickbookAuth = $this->refreshToken();
         $response = Http::withHeaders([
                'Authorization' => 'Bearer '.$quickbookAuth['access_token'],
@@ -58,12 +69,12 @@ class QuickBooksController extends BaseController
            ])->post($this->base.'/v3/company/'.$this->realm_id.'/invoice', [
             "Line" => [
                 [
-                    "Description" => "Rock Fountain", 
+                    "Description" => 'Ref: #'.$reference.','.$pick_up.' to '.$drop_off,
                     "DetailType" =>  "SalesItemLineDetail", 
                   "Amount"=> 100.0, 
                   "SalesItemLineDetail"=> [
                     "ItemRef"=> [
-                      "name"=> "Services", 
+                      "name"=> "Service", 
                       "value"=> "1"
                     ]
                   ]
@@ -88,6 +99,58 @@ class QuickBooksController extends BaseController
             ]);
                     return $response;
                 }
+    public function updateInvoice(){
+        $quickbookAuth = $this->refreshToken();
+        $response = Http::withHeaders([
+               'Authorization ' => 'Bearer '.$quickbookAuth['access_token'],
+                'Accept' => 'application/json',
+                "Content-Type" => "application/json"
+            ])->post($this->base.'/v3/company/'.$this->realm_id.'/invoice/1', [
+                'Line' => [
+                    [
+                        "Description" => "Rock Fountain", 
+                        "DetailType" =>  "SalesItemLineDetail", 
+                      "Amount"=> 100.0, 
+                      "SalesItemLineDetail"=> [
+                        "ItemRef"=> [
+                          "name"=> "Services", 
+                          "value"=> "1"
+                        ]
+                      ]
+                    ]
+                        ],
+                      "CustomerRef" => [
+                        "value" => "1"
+                      ],
+            ]);
+            return $response;
+    }
+    public function updateCompany(){
+        $quickbookAuth = $this->refreshToken();
+        $response = Http::withHeaders([
+               'Authorization ' => 'Bearer '.$quickbookAuth['access_token'],
+                'Accept' => 'application/json',
+                "Content-Type" => "application/json"
+            ])->post($this->base.'/v3/company/'.$this->realm_id.'/invoice/1', [
+                'Line' => [
+                    [
+                        "Description" => "Rock Fountain", 
+                        "DetailType" =>  "SalesItemLineDetail", 
+                      "Amount"=> 100.0, 
+                      "SalesItemLineDetail"=> [
+                        "ItemRef"=> [
+                          "name"=> "Services", 
+                          "value"=> "1"
+                        ]
+                      ]
+                    ]
+                        ],
+                      "CustomerRef" => [
+                        "value" => "1"
+                      ],
+            ]);
+            return $response;
+    }
     public function refreshToken(){
         $credentials = Credential::where('name', 'quickbooks')->first();
         $response = Http::asForm()->withHeaders([

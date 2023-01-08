@@ -7,6 +7,7 @@ use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
+use App\Http\Controllers\API\QuickBooksController;
 use Validator;
    
 class GoogleLoginController extends BaseController
@@ -33,6 +34,7 @@ class GoogleLoginController extends BaseController
                 $input['email_verified_at'] = now();
                 $input['password'] = bcrypt('you_cannot_find_this_password');
                 $newUser = User::create($input);
+                $result = (new QuickBooksController)->createCustomer($user);
                 $success['token'] =  $newUser->createToken('MyApp')->accessToken;
                 $success['name'] =  $newUser->name;
                 return $this->sendResponse($success, 'User register successfully.');    
