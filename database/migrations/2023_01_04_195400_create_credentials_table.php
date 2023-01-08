@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('refresh_token');
-            $table->string('access_token');
+            $table->text('access_token')->nullable();
             $table->timestamps();
         });
     }

@@ -47,4 +47,6 @@ Route::post('/account/company', [UserController::class, 'updateCompany'])->middl
 Route::middleware(['auth:api','verified'])->group( function () {
     Route::post('/customer/create', [QuickBooksController::class , 'createCustomer']);
     Route::post('/customer/{id}/update', [QuickBooksController::class , 'updateCustomer']);
+    Route::post('/invoice/create', [QuickBooksController::class , 'createInvoice']);
+    Route::post('/invoice/{id}/update', [QuickBooksController::class , 'updateInvoice']);
 });
