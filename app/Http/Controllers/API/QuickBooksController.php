@@ -5,7 +5,8 @@ namespace App\Http\Controllers\API;
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\User;
-use App\Models\Category;
+use App\Models\Load;
+use App\Models\Payment;
 use App\Models\Credential;
 use Illuminate\Support\Facades\Http;
 
@@ -35,6 +36,7 @@ class QuickBooksController extends BaseController
      */
     public function createCustomer($request)
     {
+      error_log(json_encode($request));
        $quickbookAuth = $this->refreshToken();
          $response = Http::withHeaders([
                 'Authorization' => 'Bearer '.$quickbookAuth['access_token'],
@@ -46,6 +48,7 @@ class QuickBooksController extends BaseController
                     'Address' => $request->email
                 ],
             ]);
+            error_log(json_encode($response));
         $user = User::find($request->id);
         $user->quickbooks_id = $response['Customer']['Id'];
         $user->save();
@@ -56,6 +59,11 @@ class QuickBooksController extends BaseController
         error_log(json_encode($request));
         $load = json_decode(json_encode($request));
         //get last 8 chars of id
+        $current_load = Load::find($load->id);
+        $user = $current_load->user;
+        $customer_ref = $user->quickbooks_id;
+        error_log(json_encode($user));
+
         $reference = substr($load->id, -8);
         $shipper = $load ->locations[0];
         $receiver = $load ->locations[1];
@@ -69,9 +77,9 @@ class QuickBooksController extends BaseController
            ])->post($this->base.'/v3/company/'.$this->realm_id.'/invoice', [
             "Line" => [
                 [
-                    "Description" => 'Ref: #'.$reference.','.$pick_up.' to '.$drop_off,
+                    "Description" => 'Ref: #'.$reference.', From: '.$pick_up.', To: '.$drop_off,
                     "DetailType" =>  "SalesItemLineDetail", 
-                  "Amount"=> 100.0, 
+                  "Amount"=> $load->initial_price, 
                   "SalesItemLineDetail"=> [
                     "ItemRef"=> [
                       "name"=> "Service", 
@@ -81,11 +89,20 @@ class QuickBooksController extends BaseController
                 ]
                     ],
               "CustomerRef" => [
-                "value" => "1"
+                "value" => $customer_ref
               ],
+              "AllowIPNPayment"=> true,
+              "AllowOnlinePayment"=>true,
+              'AllowOnlineACHPayment'=> true,
+              'AllowOnlineCreditCardPayment'=> true
            ]);
-     $sendInvoice = $this->sendInvoice($response['Invoice']['Id']);   
-       return $sendInvoice;
+           $payment = new Payment();
+           $payment->load_id = $load->id;
+           $payment->invoice_id = $response['Invoice']['Id'];
+           $payment->save();
+
+           $sendInvoice = $this->sendInvoice($response['Invoice']['Id']);   
+           return $sendInvoice;
     }
     
     public function sendInvoice($invoiceId){

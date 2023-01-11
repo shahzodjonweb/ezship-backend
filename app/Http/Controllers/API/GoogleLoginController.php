@@ -34,7 +34,7 @@ class GoogleLoginController extends BaseController
                 $input['email_verified_at'] = now();
                 $input['password'] = bcrypt('you_cannot_find_this_password');
                 $newUser = User::create($input);
-                $result = (new QuickBooksController)->createCustomer($user);
+                $result = (new QuickBooksController)->createCustomer($newUser);
                 $success['token'] =  $newUser->createToken('MyApp')->accessToken;
                 $success['name'] =  $newUser->name;
                 return $this->sendResponse($success, 'User register successfully.');    

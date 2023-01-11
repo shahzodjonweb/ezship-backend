@@ -29,7 +29,8 @@ class User extends Authenticatable  implements MustVerifyEmail,CanResetPassword
         'password',
         'avatar',
         'email_verified_at',
-        'has_company'
+        'has_company',
+        'quickbooks_id'
     ];
 
     /**
