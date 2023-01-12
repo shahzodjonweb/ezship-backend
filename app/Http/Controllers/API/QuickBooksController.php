@@ -178,7 +178,7 @@ class QuickBooksController extends BaseController
             'grant_type' => 'refresh_token',
             'refresh_token' => $credentials->refresh_token,
         ]);
-
+        error_log(json_encode($response));
         $credentials->access_token = $response['access_token'];
         $credentials->refresh_token = $response['refresh_token'];
         $credentials->update();
