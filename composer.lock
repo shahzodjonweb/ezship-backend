@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c6f55aa46637c14d19dbe04dcc4bb655",
+    "content-hash": "285573aa745ac03299400e43688dc4ce",
     "packages": [
         {
             "name": "brick/math",
@@ -500,17 +500,79 @@
             "time": "2022-06-18T20:57:19+00:00"
         },
         {
-            "name": "firebase/php-jwt",
-            "version": "v6.3.0",
+            "name": "faganchalabizada/apple-laravel-authorization-code",
+            "version": "dev-main",
             "source": {
                 "type": "git",
-                "url": "https://github.com/firebase/php-jwt.git",
-                "reference": "018dfc4e1da92ad8a1b90adc4893f476a3b41cb8"
+                "url": "https://github.com/faganchalabizada/apple-laravel-authorization-code.git",
+                "reference": "c9af74dd4540878159393f7cc70d51f93a8bd57d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/firebase/php-jwt/zipball/018dfc4e1da92ad8a1b90adc4893f476a3b41cb8",
-                "reference": "018dfc4e1da92ad8a1b90adc4893f476a3b41cb8",
+                "url": "https://api.github.com/repos/faganchalabizada/apple-laravel-authorization-code/zipball/c9af74dd4540878159393f7cc70d51f93a8bd57d",
+                "reference": "c9af74dd4540878159393f7cc70d51f93a8bd57d",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": ">=5.8"
+            },
+            "require-dev": {
+                "mockery/mockery": "~0.9||~1.0",
+                "orchestra/testbench": "~3.0",
+                "phpunit/phpunit": "^7.3"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "FaganChalabizada\\AppleTokenAuth\\AppleTokenAuthServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "FaganChalabizada\\AppleTokenAuth\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Isaias Dias",
+                    "email": "isaias@animus.com.ar",
+                    "homepage": "https://www.animus.coop"
+                }
+            ],
+            "description": "Get User Data with the result code of a apple sign in button",
+            "keywords": [
+                "Apple Jwt",
+                "apple",
+                "apple-laravel-authorization-code",
+                "create jwt apple php",
+                "jwt php",
+                "laravel",
+                "sign in apple"
+            ],
+            "support": {
+                "source": "https://github.com/faganchalabizada/apple-laravel-authorization-code/tree/main"
+            },
+            "time": "2022-02-20T09:46:50+00:00"
+        },
+        {
+            "name": "firebase/php-jwt",
+            "version": "v6.3.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/firebase/php-jwt.git",
+                "reference": "ea7dda77098b96e666c5ef382452f94841e439cd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/firebase/php-jwt/zipball/ea7dda77098b96e666c5ef382452f94841e439cd",
+                "reference": "ea7dda77098b96e666c5ef382452f94841e439cd",
                 "shasum": ""
             },
             "require": {
@@ -557,9 +619,9 @@
             ],
             "support": {
                 "issues": "https://github.com/firebase/php-jwt/issues",
-                "source": "https://github.com/firebase/php-jwt/tree/v6.3.0"
+                "source": "https://github.com/firebase/php-jwt/tree/v6.3.2"
             },
-            "time": "2022-07-15T16:48:45+00:00"
+            "time": "2022-12-19T17:10:46+00:00"
         },
         {
             "name": "fruitcake/laravel-cors",
@@ -2232,6 +2294,76 @@
             "time": "2022-04-15T14:02:14+00:00"
         },
         {
+            "name": "league/oauth2-client",
+            "version": "2.6.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thephpleague/oauth2-client.git",
+                "reference": "2334c249907190c132364f5dae0287ab8666aa19"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thephpleague/oauth2-client/zipball/2334c249907190c132364f5dae0287ab8666aa19",
+                "reference": "2334c249907190c132364f5dae0287ab8666aa19",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^6.0 || ^7.0",
+                "paragonie/random_compat": "^1 || ^2 || ^9.99",
+                "php": "^5.6 || ^7.0 || ^8.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.3.5",
+                "php-parallel-lint/php-parallel-lint": "^1.3.1",
+                "phpunit/phpunit": "^5.7 || ^6.0 || ^9.5",
+                "squizlabs/php_codesniffer": "^2.3 || ^3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-2.x": "2.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "League\\OAuth2\\Client\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Alex Bilbie",
+                    "email": "hello@alexbilbie.com",
+                    "homepage": "http://www.alexbilbie.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Woody Gilk",
+                    "homepage": "https://github.com/shadowhand",
+                    "role": "Contributor"
+                }
+            ],
+            "description": "OAuth 2.0 Client Library",
+            "keywords": [
+                "Authentication",
+                "SSO",
+                "authorization",
+                "identity",
+                "idp",
+                "oauth",
+                "oauth2",
+                "single sign on"
+            ],
+            "support": {
+                "issues": "https://github.com/thephpleague/oauth2-client/issues",
+                "source": "https://github.com/thephpleague/oauth2-client/tree/2.6.1"
+            },
+            "time": "2021-12-22T16:42:49+00:00"
+        },
+        {
             "name": "league/oauth2-server",
             "version": "8.3.5",
             "source": {
@@ -3176,6 +3308,70 @@
                 "source": "https://github.com/paragonie/random_compat"
             },
             "time": "2020-10-15T08:29:30+00:00"
+        },
+        {
+            "name": "patrickbussmann/oauth2-apple",
+            "version": "0.2.10",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/patrickbussmann/oauth2-apple.git",
+                "reference": "561ae0f92cc3f5fd4e8486f54be521aa078ad72e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/patrickbussmann/oauth2-apple/zipball/561ae0f92cc3f5fd4e8486f54be521aa078ad72e",
+                "reference": "561ae0f92cc3f5fd4e8486f54be521aa078ad72e",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "firebase/php-jwt": "^5.2 || ^6.0",
+                "lcobucci/jwt": "^3.4 || ^4.0",
+                "league/oauth2-client": "^2.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.3",
+                "php-parallel-lint/php-parallel-lint": "^1.3",
+                "phpunit/phpunit": "^5.7 || ^6.0 || ^9.3",
+                "squizlabs/php_codesniffer": "^2.3 || ^3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "League\\OAuth2\\Client\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Patrick Bußmann",
+                    "email": "patrick.bussmann@bussmann-it.de",
+                    "homepage": "https://github.com/patrickbussmann"
+                }
+            ],
+            "description": "Sign in with Apple OAuth 2.0 Client Provider for The PHP League OAuth2-Client",
+            "keywords": [
+                "apple",
+                "authorisation",
+                "authorization",
+                "client",
+                "oauth",
+                "oauth2",
+                "sign-in-with-apple"
+            ],
+            "support": {
+                "issues": "https://github.com/patrickbussmann/oauth2-apple/issues",
+                "source": "https://github.com/patrickbussmann/oauth2-apple/tree/0.2.10"
+            },
+            "time": "2022-10-01T11:10:37+00:00"
         },
         {
             "name": "php-http/message-factory",
@@ -9188,7 +9384,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "faganchalabizada/apple-laravel-authorization-code": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

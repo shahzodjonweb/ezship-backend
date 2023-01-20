@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\RegisterController;
 use App\Http\Controllers\API\LoadController;
 use App\Http\Controllers\API\GoogleLoginController;
+use App\Http\Controllers\API\AppleLoginController;
 use App\Http\Controllers\API\VerificationController;
 use App\Http\Controllers\API\PasswordResetRequestController;
 use App\Http\Controllers\API\LocationController;
@@ -29,6 +30,7 @@ Route::post('register', [RegisterController::class, 'register']);
 Route::post('login', [RegisterController::class, 'login']);
 
 Route::post('google/login', [GoogleLoginController::class, 'login']);
+Route::post('apple/login', [AppleLoginController::class, 'login']);
 Route::middleware(['auth:api','verified'])->group( function () {
     Route::resource('loads', LoadController::class);
     Route::post('loads/{id}/counter-rate', [LoadController::class , 'handleCounterRate']);
