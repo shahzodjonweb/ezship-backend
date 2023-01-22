@@ -50,8 +50,11 @@ class QuickBooksController extends BaseController
             ]);
             error_log(json_encode($response));
         $user = User::find($request->id);
-        $user->quickbooks_id = $response['Customer']['Id'];
-        $user->save();
+        // check if response have Customer
+        if (isset($response['Customer'])) {
+            $user->quickbooks_id = $response['Customer']['Id'];
+            $user->save();
+        }
         return $response;
     }
     public function createInvoice( $request)
