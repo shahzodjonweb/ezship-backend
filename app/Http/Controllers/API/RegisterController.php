@@ -69,7 +69,7 @@ class RegisterController extends BaseController
     {
         $user = Auth::user();
         // not delete if user have incomplete orders
-        if($user->loads->whereIn('status', '!=', ['pending', 'completed', 'invoiced' , 'rejected'])->count() > 0){
+        if($user->loads->whereNotIn('status', ['pending', 'completed', 'invoiced' , 'rejected'])->count() > 0){
             return $this->sendError('Incomplete Orders.', ['error'=>'You can not delete your account while you have incomplete orders.']);
         }
         // delete company if user have company
