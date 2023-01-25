@@ -89,7 +89,7 @@ class LoadController extends BaseController
         }
 
         $load -> save();
-        $result = (new QuickBooksController)->createInvoice(new LoadResource($load));
+        // $result = (new QuickBooksController)->createInvoice(new LoadResource($load));
         return $this->sendResponse(new LoadResource($load), 'Load created successfully.');
     } 
    
