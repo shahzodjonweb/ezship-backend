@@ -65,4 +65,18 @@ class RegisterController extends BaseController
             return $this->sendError('Unauthorised.', ['error'=>'Unauthorised']);
         } 
     }
+    public function delete(Request $request)
+    {
+        $user = Auth::user();
+        // not delete if user have incomplete orders
+        if($user->loads->whereIn('status', '!=', ['pending', 'completed', 'invoiced' , 'rejected'])->count() > 0){
+            return $this->sendError('Incomplete Orders.', ['error'=>'You can not delete your account while you have incomplete orders.']);
+        }
+        // delete company if user have company
+        if($user->company){
+            $user->company->delete();
+        }
+        $user->delete();
+        return $this->sendResponse( new UserResource($user), 'User deleted successfully.');
+    }
 }

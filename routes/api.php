@@ -28,6 +28,7 @@ use App\Http\Controllers\API\QuickBooksController;
 Route::get('account', [RegisterController::class, 'account'])->middleware('auth:api');
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('login', [RegisterController::class, 'login']);
+Route::delete('delete', [RegisterController::class, 'delete'])->middleware('auth:api');
 
 Route::post('google/login', [GoogleLoginController::class, 'login']);
 Route::post('apple/login', [AppleLoginController::class, 'login']);
