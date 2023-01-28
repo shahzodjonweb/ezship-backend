@@ -79,5 +79,9 @@ class User extends Authenticatable  implements MustVerifyEmail,CanResetPassword
     {
         $this->notify(new PasswordResetNotification($token));
     }
+    public function isAdmin()
+    {
+        return $this->role == 'admin';
+    }
 
 }

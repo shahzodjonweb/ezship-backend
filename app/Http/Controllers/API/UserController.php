@@ -9,6 +9,7 @@ use App\Models\Company;
 use Validator;
 use Auth;
 use App\Http\Resources\User as UserResource;
+use App\Http\Resources\Customer as CustomerResource;
    
 class UserController extends BaseController
 {
@@ -71,6 +72,15 @@ class UserController extends BaseController
             $user->save();
         }
         return $this->sendResponse(new UserResource($user) , 'Company updated successfully.');
+    }
+
+    public function getCustomers(){
+        $customers = Auth::where('role', 'user')->orderBy('created_at','DESC')->get();
+        return $this->sendResponse(UserResource::collection($customers) , 'Customers retrieved successfully.');
+    }
+    public function getCustomerInfo($id){
+        $customer = User::find($id);
+        return $this->sendResponse(new CustomerResource($customer) , 'Customer retrieved successfully.');
     }
 
 }

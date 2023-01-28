@@ -36,6 +36,14 @@ class LoadController extends BaseController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+  public function  getLoadList(Request $request){
+        if($request['status']){
+            $loads = Load::where('status', $request['status'])->orderBy('created_at','DESC')->get();
+        }else{
+            $loads = Load::orderBy('created_at','DESC')->get();
+        }
+        return $this->sendResponse(LoadResource::collection($loads), 'Loads retrieved successfully.');
+  }
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -189,6 +197,29 @@ class LoadController extends BaseController
         $load->save();
         return $this->sendResponse(new LoadResource($load), 'Load updated successfully.');
    }
+
+   public function handleCounterRateAgainstCustomer($id , Request $request){
+        $load = Load::find($id);
+        $load -> counter_price = $request['price'];
+        $load->save();
+        return $this->sendResponse(new LoadResource($load), 'Counter rate set successfully.');
+    }
+
+    public function updateLoadStatus($id , Request $request){
+        $load = Load::find($id);
+        switch ($request['status']) {
+            case 'accepted':
+                $load->status = 'accepted';
+                break;
+             case 'invoiced':
+                    $load->status = 'invoiced';
+                    break;
+            default:
+                $load->status = $request['status'];
+                break;
+        }
+        return $this->sendResponse(new LoadResource($load), 'Load status updated successfully.');
+    }
     /**
      * Remove the specified resource from storage.
      *

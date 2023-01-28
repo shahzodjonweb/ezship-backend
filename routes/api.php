@@ -37,6 +37,7 @@ Route::middleware(['auth:api','verified'])->group( function () {
     Route::post('loads/{id}/counter-rate', [LoadController::class , 'handleCounterRate']);
 });
 
+
 Route::get('/email/verify',[VerificationController::class, 'show'])->name('verification.notice');
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify');
 Route::post('/email/resend', [VerificationController::class, 'resend'])->name('verification.resend');
@@ -53,3 +54,10 @@ Route::middleware(['auth:api','verified'])->group( function () {
     Route::post('/invoice/create', [QuickBooksController::class , 'createInvoice']);
     Route::post('/invoice/{id}/update', [QuickBooksController::class , 'updateInvoice']);
 });
+
+// admin specific actions 
+Route::get('admin/loads', [LoadController::class , 'getLoadList'])->middleware(['auth:api','admin','verified']);
+Route::get('admin/customers', [UserController::class , 'getCustomers'])->middleware(['auth:api','admin','verified']);
+Route::get('admin/customer/{id}', [UserController::class , 'getCustomerInfo'])->middleware(['auth:api','admin','verified']);
+Route::patch('admin/load/{id}/status', [LoadController::class , 'updateLoadStatus'])->middleware(['auth:api','admin','verified']);
+Route::post('admin/load/{id}/counter-rate', [LoadController::class , 'handleCounterRateAgainstCustomer'])->middleware(['auth:api','admin','verified']);
