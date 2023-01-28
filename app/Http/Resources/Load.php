@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Http\Resources\Category as CategoryResource;
 use App\Http\Resources\Stop as StopResource;
 use App\Http\Resources\Payment as PaymentResource;
+use App\Http\Resources\User as UserResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class Load extends JsonResource
@@ -28,6 +29,7 @@ class Load extends JsonResource
             'categories' => CategoryResource::collection($this->categories),
             'locations' => StopResource::collection($this->stops),
             'payment' => new PaymentResource($this->payment),
+            'owner' => new UserResource($this->user),
             'created_at' => $this->created_at->format('d/m/Y'),
             'updated_at' => $this->updated_at->format('d/m/Y'),
         ];

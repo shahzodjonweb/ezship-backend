@@ -218,6 +218,7 @@ class LoadController extends BaseController
                 $load->status = $request['status'];
                 break;
         }
+        $load->save();
         return $this->sendResponse(new LoadResource($load), 'Load status updated successfully.');
     }
     /**
