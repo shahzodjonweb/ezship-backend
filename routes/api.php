@@ -13,6 +13,7 @@ use App\Http\Controllers\API\PasswordResetRequestController;
 use App\Http\Controllers\API\LocationController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\QuickBooksController;
+use App\Http\Controllers\API\PriceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +48,7 @@ Route::post('/reset-password', [PasswordResetRequestController::class , 'resetPa
 Route::patch('/location/{id}', [LocationController::class, 'update'])->middleware('auth:api');
 Route::patch('/account', [UserController::class, 'update'])->middleware('auth:api');
 Route::post('/account/company', [UserController::class, 'updateCompany'])->middleware('auth:api');
+Route::get('/rates', [PriceController::class, 'getRates'])->middleware('auth:api');
 
 Route::middleware(['auth:api','verified'])->group( function () {
     Route::post('/customer/create', [QuickBooksController::class , 'createCustomer']);
