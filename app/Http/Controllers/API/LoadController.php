@@ -13,6 +13,7 @@ use Validator;
 use Auth;
 use App\Http\Resources\Load as LoadResource;
 use App\Http\Controllers\API\QuickBooksController;
+use Illuminate\Support\Facades\Http;
 
 class LoadController extends BaseController
 {
@@ -232,4 +233,14 @@ class LoadController extends BaseController
         $load->delete();
         return $this->sendResponse([], 'Load deleted successfully.');
     }
+
+    public function getDistanceBetweenPoints(Request $request){
+        $lat1 = $request['lat1'];
+        $lon1 = $request['lon1'];
+        $lat2 = $request['lat2'];
+        $lon2 = $request['lon2'];
+        $url = "https://maps.googleapis.com/maps/api/directions/json?origin=".$lat1.",".$lon1."&destination=".$lat2.",".$lon2."&key=AIzaSyA2b82nOOXYn8LIjMiqQtV1jhM9wVj4q3E";
+        $response = Http::get($url);
+        return $response->json();
+     }
 }

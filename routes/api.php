@@ -36,6 +36,7 @@ Route::post('apple/login', [AppleLoginController::class, 'login']);
 Route::middleware(['auth:api','verified'])->group( function () {
     Route::resource('loads', LoadController::class);
     Route::post('loads/{id}/counter-rate', [LoadController::class , 'handleCounterRate']);
+    Route::post('loads/distance', [LoadController::class , 'getDistanceBetweenPoints']);
 });
 
 
