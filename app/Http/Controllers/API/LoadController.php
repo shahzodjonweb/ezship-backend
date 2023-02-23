@@ -75,7 +75,7 @@ class LoadController extends BaseController
                $newType->value = $type['value'];
                $newType->save();
         }
-        $locations = $request->locations->reverse();
+        $locations = array_reverse($request->locations);
         foreach($locations as $location){
             // create location 
                $new_location = new Location;
