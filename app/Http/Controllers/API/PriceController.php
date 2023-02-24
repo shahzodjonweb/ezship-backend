@@ -18,7 +18,7 @@ class PriceController extends BaseController
     public function getRates()
     {
         $pricing = [
-            'car' => 2.5,
+            'car' => 0.2,
             'flatbed' => 2.75,
             'reefer' => 2.65,
             'stepdeck' => 2.65,
