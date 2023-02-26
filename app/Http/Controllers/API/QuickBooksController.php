@@ -43,7 +43,7 @@ class QuickBooksController extends BaseController
                 'Accept' => 'application/json',
                 "Content-Type" => "application/json"
             ])->post($this->base.'/v3/company/'.$this->realm_id.'/customer', [
-                'DisplayName' => $request->name.' '.date("Y-m-d_h:m"),
+                'DisplayName' => $request->name.' '.date("Y-m-d-h-m"),
                 'PrimaryEmailAddr' => [
                     'Address' => $request->email
                 ],
