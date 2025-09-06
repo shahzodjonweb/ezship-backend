@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class AdminMiddleware
+class AdminAuth
 {
     /**
      * Handle an incoming request.
@@ -17,12 +17,12 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!Auth::check() || !Auth::user()->is_admin) {
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'Unauthorized'], 401);
-            }
-            
-            return redirect()->route('admin.login')->with('error', 'Please login as admin to continue.');
+        if (!Auth::check()) {
+            return redirect()->route('admin.login');
+        }
+
+        if (!Auth::user()->is_admin) {
+            return redirect('/')->with('error', 'You do not have admin access.');
         }
 
         return $next($request);

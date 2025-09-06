@@ -30,7 +30,8 @@ class User extends Authenticatable  implements MustVerifyEmail,CanResetPassword
         'avatar',
         'email_verified_at',
         'has_company',
-        'quickbooks_id'
+        'quickbooks_id',
+        'is_admin'
     ];
 
     /**
@@ -81,7 +82,7 @@ class User extends Authenticatable  implements MustVerifyEmail,CanResetPassword
     }
     public function isAdmin()
     {
-        return $this->role == 'admin';
+        return $this->is_admin;
     }
 
 }

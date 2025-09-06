@@ -1,7 +1,7 @@
 <?php
-   
+
 namespace App\Http\Controllers\API;
-   
+
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\Load;
@@ -24,10 +24,10 @@ class LoadController extends BaseController
      */
     public function index(Request $request)
     {
-        $loads =Load::where('user_id',Auth::user()->id)->where('status', '!=', 'initial')
-        ->orderBy('created_at','DESC')->get();
-        if($request['status']){
-            $loads =$loads->where('status', $request['status']);
+        $loads = Load::where('user_id', Auth::user()->id)->where('status', '!=', 'initial')
+            ->orderBy('created_at', 'DESC')->get();
+        if ($request['status']) {
+            $loads = $loads->where('status', $request['status']);
         }
         return $this->sendResponse(LoadResource::collection($loads), 'Loads retrieved successfully.');
     }
@@ -37,14 +37,15 @@ class LoadController extends BaseController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-  public function  getLoadList(Request $request){
-        if($request['status']){
-            $loads = Load::where('status', $request['status'])->orderBy('created_at','DESC')->get();
-        }else{
-            $loads = Load::orderBy('created_at','DESC')->get();
+    public function  getLoadList(Request $request)
+    {
+        if ($request['status']) {
+            $loads = Load::where('status', $request['status'])->orderBy('created_at', 'DESC')->get();
+        } else {
+            $loads = Load::orderBy('created_at', 'DESC')->get();
         }
         return $this->sendResponse(LoadResource::collection($loads), 'Loads retrieved successfully.');
-  }
+    }
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -53,55 +54,54 @@ class LoadController extends BaseController
             'initial_price' => 'numeric | between:0,99999.99'
         ]);
 
-        if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
         }
         $user_id = Auth::user()->id;
-     
+
         $load = new Load;
-        $load -> user_id = $user_id;
-        $load -> status = 'pending';
-        $load -> type = $request->type;
-        $load -> description = $request->description;
-        $load -> phone = $request->phone;
-        $load -> initial_price = $request->initial_price;
-        $load -> save();
+        $load->user_id = $user_id;
+        $load->status = 'pending';
+        $load->type = $request->type;
+        $load->description = $request->description;
+        $load->phone = $request->phone;
+        $load->initial_price = $request->initial_price;
+        $load->save();
         $newTypes = $request->categories;
         // dd($request->categories);
-        foreach($newTypes as $type){
-               $newType = new Category;
-               $newType->load_id = $load->id;
-               $newType->name = $type['name'];
-               $newType->value = $type['value'];
-               $newType->save();
+        foreach ($newTypes as $type) {
+            $newType = new Category;
+            $newType->load_id = $load->id;
+            $newType->name = $type['name'];
+            $newType->value = $type['value'];
+            $newType->save();
         }
         $locations = $request->locations;
-        foreach($locations as $location){
+        foreach ($locations as $location) {
             // create location 
-               $new_location = new Location;
-                $new_location -> user_id = $user_id;
-                $new_location->address = $location['address'];
-                $new_location->city = $location['city'];
-                $new_location->state = $location['state'];
-                $new_location->zip = $location['zip'];
-                $new_location->lat = $location['lat'];
-                $new_location->lon = $location['lon'];
-                $new_location->save();
-                // create stop corresponding to location and load id
-                $new_stop = new Stop;
-                $new_stop -> user_id = $user_id;
-                $new_stop->load_id = $load->id;
-                $new_stop->location_id = $new_location->id;
-                $new_stop->date = $location['date'];
-                $new_stop->save();
-
+            $new_location = new Location;
+            $new_location->user_id = $user_id;
+            $new_location->address = $location['address'];
+            $new_location->city = $location['city'];
+            $new_location->state = $location['state'];
+            $new_location->zip = $location['zip'];
+            $new_location->lat = $location['lat'];
+            $new_location->lon = $location['lon'];
+            $new_location->save();
+            // create stop corresponding to location and load id
+            $new_stop = new Stop;
+            $new_stop->user_id = $user_id;
+            $new_stop->load_id = $load->id;
+            $new_stop->location_id = $new_location->id;
+            $new_stop->date = $location['date'];
+            $new_stop->save();
         }
 
-        $load -> save();
+        $load->save();
         // $result = (new QuickBooksController)->createInvoice(new LoadResource($load));
         return $this->sendResponse(new LoadResource($load), 'Load created successfully.');
-    } 
-   
+    }
+
     /**
      * Display the specified resource.
      *
@@ -111,14 +111,14 @@ class LoadController extends BaseController
     public function show($id)
     {
         $load = Load::find($id);
-  
+
         if (is_null($load)) {
             return $this->sendError('Load not found.');
         }
 
         return $this->sendResponse(new LoadResource($load), 'Load retrieved successfully.');
     }
-    
+
     /**
      * Update the specified resource in storage.
      *
@@ -136,85 +136,88 @@ class LoadController extends BaseController
             'initial_price' => 'numeric | between:0,99999.99'
         ]);
 
-        if($validator->fails()){
-            return $this->sendError('Validation Error.', $validator->errors());       
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error.', $validator->errors());
         }
         $load->update($input);
-        if($request->has('types')){
-           $oldTypes = $load->types;
-           $newTypes = $request->types;
-           foreach($newTypes as $type){
-              $isExist = false;
-              foreach($oldTypes as $oldType){
-                 if($type['name'] == $oldType->name){
-                    $oldType->update($type);
-                    $isExist = true;
-                 }
-              }
-              if(!$isExist){
-                 $newType = new Category;
-                 $newType->load_id = $load->id;
-                 $newType->name = $type['name'];
-                 $newType->value = $type['value'];
-                 $newType->save();
-              }
-           }
+        if ($request->has('types')) {
+            $oldTypes = $load->types;
+            $newTypes = $request->types;
+            foreach ($newTypes as $type) {
+                $isExist = false;
+                foreach ($oldTypes as $oldType) {
+                    if ($type['name'] == $oldType->name) {
+                        $oldType->update($type);
+                        $isExist = true;
+                    }
+                }
+                if (!$isExist) {
+                    $newType = new Category;
+                    $newType->load_id = $load->id;
+                    $newType->name = $type['name'];
+                    $newType->value = $type['value'];
+                    $newType->save();
+                }
+            }
         }
 
-        if($request->has('locations')){
+        if ($request->has('locations')) {
             $old_locations = $load->locations;
             $new_locations = $request->locations;
-                 foreach($new_locations as $key1=>$location){
-                     $isExist = false;
-                     foreach($old_locations as $key2=>$old_location){
-                         if($key1 == $key2){
-                             $old_location->update($location);
-                             $isExist = true;
-                         }
-                     }
-                     if(!$isExist){
-                         $new_location = new Location;
-                         $new_location->load_id = $load->id;
-                         $new_location->address = $location['address'];
-                         $new_location->city = $location['city'];
-                         $new_location->state = $location['state'];
-                         $new_location->zip = $location['zip'];
-                         $new_location->date = $location['date'];
-                         $new_location->save();
-                     }
-                 }
-         }
-   
+            foreach ($new_locations as $key1 => $location) {
+                $isExist = false;
+                foreach ($old_locations as $key2 => $old_location) {
+                    if ($key1 == $key2) {
+                        $old_location->update($location);
+                        $isExist = true;
+                    }
+                }
+                if (!$isExist) {
+                    $new_location = new Location;
+                    $new_location->load_id = $load->id;
+                    $new_location->address = $location['address'];
+                    $new_location->city = $location['city'];
+                    $new_location->state = $location['state'];
+                    $new_location->zip = $location['zip'];
+                    $new_location->date = $location['date'];
+                    $new_location->save();
+                }
+            }
+        }
+
         return $this->sendResponse(new LoadResource($load), 'Load updated successfully.');
     }
-   public function handleCounterRate($id , Request $request){
+    public function handleCounterRate($id, Request $request)
+    {
         $load = Load::find($id);
-        if($request['action'] == 'accept'){
-            $load->initial_price = $load -> counter_price;
+        if ($request['action'] == 'accept') {
+            $load->initial_price = $load->counter_price;
             $load->status = 'accepted';
-        }else if($request['action'] == 'reject'){
+        } else if ($request['action'] == 'reject') {
             $load->status = 'rejected';
         }
         $load->save();
         return $this->sendResponse(new LoadResource($load), 'Load updated successfully.');
-   }
+    }
 
-   public function handleCounterRateAgainstCustomer($id , Request $request){
+    public function handleCounterRateAgainstCustomer($id, Request $request)
+    {
         $load = Load::find($id);
-        $load -> counter_price = $request['price'];
+        $load->counter_price = $request['price'];
         $load->save();
         return $this->sendResponse(new LoadResource($load), 'Counter rate set successfully.');
     }
 
-    public function updateLoadStatus($id , Request $request){
+    public function updateLoadStatus($id, Request $request)
+    {
         $load = Load::find($id);
         switch ($request['status']) {
             case 'accepted':
                 $load->status = 'accepted';
                 break;
-             case 'invoiced':
-                    $load->status = 'invoiced';
-                    break;
+            case 'invoiced':
+                $load->status = 'invoiced';
+                break;
             default:
                 $load->status = $request['status'];
                 break;
@@ -234,13 +237,14 @@ class LoadController extends BaseController
         return $this->sendResponse([], 'Load deleted successfully.');
     }
 
-    public function getDistanceBetweenPoints(Request $request){
+    public function getDistanceBetweenPoints(Request $request)
+    {
         $lat1 = $request['lat1'];
         $lon1 = $request['lon1'];
         $lat2 = $request['lat2'];
         $lon2 = $request['lon2'];
-        $url = "https://maps.googleapis.com/maps/api/directions/json?origin=".$lat1.",".$lon1."&destination=".$lat2.",".$lon2."&key=AIzaSyA2b82nOOXYn8LIjMiqQtV1jhM9wVj4q3E";
+        $url = "https://maps.googleapis.com/maps/api/directions/json?origin=" . $lat1 . "," . $lon1 . "&destination=" . $lat2 . "," . $lon2 . "&key=AIzaSyA2b82nOOXYn8LIjMiqQtV1jhM9wVj4q3E";
         $response = Http::get($url);
         return $response->json();
-     }
+    }
 }

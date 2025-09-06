@@ -6,13 +6,6 @@
       0 => 'FaganChalabizada\\AppleTokenAuth\\AppleTokenAuthServiceProvider',
     ),
   ),
-  'fruitcake/laravel-cors' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Fruitcake\\Cors\\CorsServiceProvider',
-    ),
-  ),
   'laravel/passport' => 
   array (
     'providers' => 
@@ -36,13 +29,13 @@
   ),
   'laravel/socialite' => 
   array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Socialite\\SocialiteServiceProvider',
-    ),
     'aliases' => 
     array (
       'Socialite' => 'Laravel\\Socialite\\Facades\\Socialite',
+    ),
+    'providers' => 
+    array (
+      0 => 'Laravel\\Socialite\\SocialiteServiceProvider',
     ),
   ),
   'laravel/tinker' => 
@@ -75,25 +68,25 @@
   ),
   'sentry/sentry-laravel' => 
   array (
+    'aliases' => 
+    array (
+      'Sentry' => 'Sentry\\Laravel\\Facade',
+    ),
     'providers' => 
     array (
       0 => 'Sentry\\Laravel\\ServiceProvider',
       1 => 'Sentry\\Laravel\\Tracing\\ServiceProvider',
     ),
-    'aliases' => 
-    array (
-      'Sentry' => 'Sentry\\Laravel\\Facade',
-    ),
   ),
   'spatie/laravel-ignition' => 
   array (
-    'providers' => 
-    array (
-      0 => 'Spatie\\LaravelIgnition\\IgnitionServiceProvider',
-    ),
     'aliases' => 
     array (
       'Flare' => 'Spatie\\LaravelIgnition\\Facades\\Flare',
+    ),
+    'providers' => 
+    array (
+      0 => 'Spatie\\LaravelIgnition\\IgnitionServiceProvider',
     ),
   ),
 );
