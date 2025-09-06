@@ -31,7 +31,7 @@ class SetupInitialData extends Command
         // Create initial quickbook credentials
         $credential = new Credential();
         $credential->name = 'quickbooks';
-        $credential->refresh_token = 'AB11681843096MpEYr9i9wkcySMtEYigIhMurQmf7wJRIjXiO3';
+        $credential->refresh_token = 'RT1-204-H0-17659225711l84e1qrw2l1j9s9x6ur';
         $credential->access_token = '';
         $credential->save();
 

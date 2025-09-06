@@ -34,6 +34,14 @@ Route::prefix('admin')->group(function () {
         Route::patch('/orders/{id}/status', [AdminController::class, 'updateOrderStatus'])->name('admin.orders.status');
         Route::delete('/orders/{id}', [AdminController::class, 'deleteOrder'])->name('admin.orders.delete');
         Route::get('/analytics', [AdminController::class, 'analytics'])->name('admin.analytics');
+        
+        // User management routes
+        Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
+        Route::get('/users/{id}/edit', [AdminController::class, 'editUser'])->name('admin.users.edit');
+        Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+        Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
+        Route::patch('/users/{id}/toggle-admin', [AdminController::class, 'toggleAdmin'])->name('admin.users.toggle-admin');
+        Route::patch('/users/{id}/reset-password', [AdminController::class, 'resetPassword'])->name('admin.users.reset-password');
     });
 });
 
@@ -47,3 +55,8 @@ Route::post('/logout', function () {
     Auth::logout();
     return redirect('/admin/login')->with('success', 'You have been logged out successfully.');
 })->name('logout');
+
+// QuickBooks OAuth Routes
+Route::get('/quickbooks/connect', [\App\Http\Controllers\QuickBooksAuthController::class, 'connect'])->name('quickbooks.connect');
+Route::get('/quickbooks/callback', [\App\Http\Controllers\QuickBooksAuthController::class, 'callback'])->name('quickbooks.callback');
+Route::get('/quickbooks/status', [\App\Http\Controllers\QuickBooksAuthController::class, 'status'])->name('quickbooks.status');

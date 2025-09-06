@@ -250,4 +250,176 @@ class AdminController extends Controller
 
         return back()->with('error', 'Invalid credentials.');
     }
+
+    /**
+     * Display a listing of users.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function users(Request $request)
+    {
+        $query = User::query();
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by admin status
+        if ($request->has('filter') && $request->filter !== 'all') {
+            if ($request->filter === 'admin') {
+                $query->where('is_admin', true);
+            } elseif ($request->filter === 'regular') {
+                $query->where('is_admin', false);
+            } elseif ($request->filter === 'verified') {
+                $query->whereNotNull('email_verified_at');
+            } elseif ($request->filter === 'unverified') {
+                $query->whereNull('email_verified_at');
+            }
+        }
+
+        // Get users without count first
+        $users = $query->orderBy('created_at', 'desc')
+            ->paginate(15);
+        
+        // Add loads count manually for each user
+        foreach ($users as $user) {
+            $user->loads_count = Load::where('user_id', $user->id)->count();
+        }
+
+        return view('admin.users', compact('users'));
+    }
+
+    /**
+     * Show the form for editing a user.
+     *
+     * @param  string  $id
+     * @return \Illuminate\View\View
+     */
+    public function editUser($id)
+    {
+        $user = User::findOrFail($id);
+        $user->loads_count = Load::where('user_id', $id)->count();
+        $recentOrders = Load::where('user_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return view('admin.edit-user', compact('user', 'recentOrders'));
+    }
+
+    /**
+     * Update the specified user.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'phone' => 'nullable|string|max:20',
+            'is_admin' => 'boolean',
+        ]);
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
+        $user->is_admin = $request->has('is_admin');
+        
+        // Verify email if requested
+        if ($request->has('verify_email') && !$user->email_verified_at) {
+            $user->email_verified_at = now();
+        }
+
+        $user->save();
+
+        return redirect()->route('admin.users.edit', $id)
+            ->with('success', 'User updated successfully.');
+    }
+
+    /**
+     * Delete the specified user.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function deleteUser($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Prevent deleting yourself
+        if ($user->id === Auth::id()) {
+            return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        // Check if user has orders
+        $orderCount = $user->loads()->count();
+        if ($orderCount > 0) {
+            return back()->with('error', "Cannot delete user with {$orderCount} orders. Consider deactivating instead.");
+        }
+
+        $userName = $user->name;
+        $user->delete();
+
+        return redirect()->route('admin.users')
+            ->with('success', "User '{$userName}' has been deleted.");
+    }
+
+    /**
+     * Toggle user admin status.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function toggleAdmin($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Prevent removing your own admin status
+        if ($user->id === Auth::id() && $user->is_admin) {
+            return back()->with('error', 'You cannot remove your own admin privileges.');
+        }
+
+        $user->is_admin = !$user->is_admin;
+        $user->save();
+
+        $message = $user->is_admin 
+            ? "User '{$user->name}' is now an admin."
+            : "Admin privileges removed from '{$user->name}'.";
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Reset user password.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function resetPassword(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user->password = bcrypt($request->password);
+        $user->save();
+
+        return back()->with('success', "Password reset successfully for '{$user->name}'.");
+    }
 }

@@ -437,6 +437,7 @@
                 <ul>
                     <li><a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">📊 Dashboard</a></li>
                     <li><a href="{{ route('admin.orders') }}" class="{{ request()->routeIs('admin.orders*') ? 'active' : '' }}">📦 Orders</a></li>
+                    <li><a href="{{ route('admin.users') }}" class="{{ request()->routeIs('admin.users*') ? 'active' : '' }}">👥 Users</a></li>
                     <li><a href="{{ route('admin.analytics') }}" class="{{ request()->routeIs('admin.analytics') ? 'active' : '' }}">📈 Analytics</a></li>
                     <li><a href="{{ url('/') }}" target="_blank">🌐 View Site</a></li>
                 </ul>
