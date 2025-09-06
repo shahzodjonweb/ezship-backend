@@ -16,7 +16,8 @@ class Load extends Model
         'description',
         'phone',
         'initial_price',
-        'counter_price'
+        'counter_price',
+        'quickbooks_invoice_id'
     ];
 
     public function categories()

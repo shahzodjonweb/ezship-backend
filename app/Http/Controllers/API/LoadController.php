@@ -14,6 +14,7 @@ use Auth;
 use App\Http\Resources\Load as LoadResource;
 use App\Http\Controllers\API\QuickBooksController;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class LoadController extends BaseController
 {
@@ -211,6 +212,8 @@ class LoadController extends BaseController
     public function updateLoadStatus($id, Request $request)
     {
         $load = Load::find($id);
+        $oldStatus = $load->status;
+        
         switch ($request['status']) {
             case 'accepted':
                 $load->status = 'accepted';
@@ -223,6 +226,38 @@ class LoadController extends BaseController
                 break;
         }
         $load->save();
+        
+        // Create QuickBooks invoice when status changes to accepted
+        if ($request['status'] === 'accepted' && $oldStatus !== 'accepted') {
+            try {
+                $quickBooksController = new QuickBooksController();
+                $result = $quickBooksController->createInvoice(new LoadResource($load));
+                
+                if (isset($result['status']) && $result['status'] === 'success') {
+                    // Store QuickBooks invoice ID if needed
+                    if (isset($result['invoice_id'])) {
+                        $load->quickbooks_invoice_id = $result['invoice_id'];
+                        $load->save();
+                    }
+                    Log::info('QuickBooks invoice created for load via API', [
+                        'load_id' => $id,
+                        'invoice_id' => $result['invoice_id'] ?? null
+                    ]);
+                } else {
+                    Log::warning('Failed to create QuickBooks invoice via API', [
+                        'load_id' => $id,
+                        'result' => $result
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Exception creating QuickBooks invoice from API', [
+                    'load_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail the status update if invoice creation fails
+            }
+        }
+        
         return $this->sendResponse(new LoadResource($load), 'Load status updated successfully.');
     }
     /**

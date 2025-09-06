@@ -8,6 +8,9 @@ use App\Models\User;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\API\QuickBooksController;
+use App\Http\Resources\Load as LoadResource;
+use Illuminate\Support\Facades\Log;
 
 class AdminController extends Controller
 {
@@ -126,6 +129,37 @@ class AdminController extends Controller
             'created_at' => now(),
         ]);
 
+        // Create QuickBooks invoice when status changes to accepted
+        if ($request->status === 'accepted' && $oldStatus !== 'accepted') {
+            try {
+                $quickBooksController = new QuickBooksController();
+                $result = $quickBooksController->createInvoice(new LoadResource($order));
+                
+                if (isset($result['status']) && $result['status'] === 'success') {
+                    // Store QuickBooks invoice ID if needed
+                    if (isset($result['invoice_id'])) {
+                        $order->quickbooks_invoice_id = $result['invoice_id'];
+                        $order->save();
+                    }
+                    Log::info('QuickBooks invoice created for load', [
+                        'load_id' => $id,
+                        'invoice_id' => $result['invoice_id'] ?? null
+                    ]);
+                } else {
+                    Log::warning('Failed to create QuickBooks invoice', [
+                        'load_id' => $id,
+                        'result' => $result
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Exception creating QuickBooks invoice from admin', [
+                    'load_id' => $id,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail the status update if invoice creation fails
+            }
+        }
+
         return redirect()->back()->with('success', 'Order status updated successfully!');
     }
 
@@ -139,7 +173,6 @@ class AdminController extends Controller
     public function updateOrder(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|string',
             'initial_price' => 'nullable|numeric|min:0',
             'counter_price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
@@ -149,12 +182,14 @@ class AdminController extends Controller
         $order = Load::findOrFail($id);
         
         $order->update([
-            'status' => $request->status,
             'initial_price' => $request->initial_price,
             'counter_price' => $request->counter_price,
             'description' => $request->description,
             'phone' => $request->phone,
         ]);
+
+        // Note: Status updates should go through updateOrderStatus method to trigger invoice creation
+        // This method no longer handles status changes
 
         return redirect()->route('admin.orders')->with('success', 'Order updated successfully!');
     }

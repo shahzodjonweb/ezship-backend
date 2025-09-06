@@ -83,11 +83,18 @@ class QuickBooksController extends BaseController
 
       $url = "{$this->base}/v3/company/{$this->realmId}/customer?minorversion={$this->minorVersion}";
 
+      // Sanitize the name to remove special characters that QuickBooks doesn't accept
+      $sanitizedName = preg_replace('/[^a-zA-Z0-9\s\-\.]/', '', $request->name);
+      $sanitizedName = trim($sanitizedName);
+      
+      // Create a unique display name with timestamp
+      $displayName = $sanitizedName . ' ' . date('YmdHis');
+      
       $response = Http::withHeaders($this->getApiHeaders($quickbooksAuth['access_token']))
         ->timeout(30)
         ->retry(3, 100)
         ->post($url, [
-          'DisplayName' => $request->name . ' ' . date('Y-m-d H:i'),
+          'DisplayName' => $displayName,
           'PrimaryEmailAddr' => [
             'Address' => $request->email
           ],
@@ -99,7 +106,7 @@ class QuickBooksController extends BaseController
           'response' => $response->json(),
           'url' => $url,
           'request_data' => [
-            'DisplayName' => $request->name . ' ' . date('Y-m-d H:i'),
+            'DisplayName' => $displayName,
             'PrimaryEmailAddr' => ['Address' => $request->email]
           ]
         ]);
@@ -198,8 +205,17 @@ class QuickBooksController extends BaseController
         ];
       }
 
-      $pickUp = $shipper->address . ', ' . $shipper->city . ', ' . $shipper->state;
-      $dropOff = $receiver->address . ', ' . $receiver->city . ', ' . $receiver->state;
+      // Sanitize address components to remove special characters that QuickBooks doesn't accept
+      $sanitizeString = function($str) {
+        return trim(preg_replace('/[^a-zA-Z0-9\s\-\.\,\#\/]/', '', $str));
+      };
+      
+      $pickUp = $sanitizeString($shipper->address) . ', ' . 
+                $sanitizeString($shipper->city) . ', ' . 
+                $sanitizeString($shipper->state);
+      $dropOff = $sanitizeString($receiver->address) . ', ' . 
+                 $sanitizeString($receiver->city) . ', ' . 
+                 $sanitizeString($receiver->state);
 
       $quickbooksAuth = $this->refreshToken();
 

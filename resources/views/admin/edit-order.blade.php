@@ -27,13 +27,8 @@
             
             <div class="form-group">
                 <label>Status</label>
-                <select name="status" required>
-                    @foreach($statuses as $status)
-                        <option value="{{ $status }}" {{ $order->status == $status ? 'selected' : '' }}>
-                            {{ ucfirst($status) }}
-                        </option>
-                    @endforeach
-                </select>
+                <input type="text" value="{{ ucfirst($order->status) }}" disabled>
+                <small style="color: #666;">Use the "Quick Status Change" section below to update status</small>
             </div>
             
             <div class="form-group">
