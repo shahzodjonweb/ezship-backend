@@ -1,0 +1,167 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+
+    - name: Get version
+      id: get_version
+      run: |
+        if [ "${{ github.event.inputs.version }}" != "" ]; then
+          VERSION=${{ github.event.inputs.version }}
+        else
+          VERSION=${GITHUB_REF#refs/tags/}
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "VERSION_NUMBER=${VERSION#v}" >> $GITHUB_OUTPUT
+
+    - name: Install dependencies
+      run: composer install --no-dev --optimize-autoloader
+
+    - name: Create deployment archive
+      run: |
+        tar -czf ezship-${{ steps.get_version.outputs.VERSION }}.tar.gz \
+          --exclude=node_modules \
+          --exclude=.git \
+          --exclude=.github \
+          --exclude=tests \
+          --exclude=.env \
+          --exclude=.env.local \
+          --exclude=storage/app/public/* \
+          --exclude=storage/framework/cache/* \
+          --exclude=storage/framework/sessions/* \
+          --exclude=storage/framework/views/* \
+          --exclude=storage/logs/* \
+          .
+
+    - name: Generate changelog
+      id: changelog
+      uses: mikepenz/release-changelog-builder-action@v4
+      with:
+        configuration: ".github/changelog-config.json"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        name: Release ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          ## What's Changed
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ## Docker Image
+          ```bash
+          docker pull ghcr.io/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
+          ```
+          
+          ## Installation
+          1. Download the release archive
+          2. Extract to your server
+          3. Run migrations: `php artisan migrate`
+          4. Clear caches: `php artisan optimize:clear`
+          5. Cache config: `php artisan optimize`
+        files: |
+          ezship-${{ steps.get_version.outputs.VERSION }}.tar.gz
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-release:
+    needs: create-release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get version
+      id: get_version
+      run: |
+        if [ "${{ github.event.inputs.version }}" != "" ]; then
+          VERSION=${{ github.event.inputs.version }}
+        else
+          VERSION=${GITHUB_REF#refs/tags/}
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
+          ghcr.io/${{ github.repository }}:latest
+          ${{ secrets.DOCKER_HUB_USERNAME }}/ezship-backend:${{ steps.get_version.outputs.VERSION }}
+          ${{ secrets.DOCKER_HUB_USERNAME }}/ezship-backend:latest
+        build-args: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          BUILD_DATE=${{ github.event.head_commit.timestamp }}
+          VCS_REF=${{ github.sha }}
+
+  deploy:
+    needs: [create-release, docker-release]
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+    - name: Deploy to Production
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /var/www/ezship
+          docker-compose pull
+          docker-compose up -d
+          docker-compose exec -T app php artisan migrate --force
+          docker-compose exec -T app php artisan optimize
+          docker-compose exec -T app php artisan queue:restart

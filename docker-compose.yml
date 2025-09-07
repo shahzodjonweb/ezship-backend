@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # PHP Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ezship-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - ezship-network
+    depends_on:
+      - db
+      - redis
+
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: ezship-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - ezship-network
+    depends_on:
+      - app
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: ezship-db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-ezship}
+      POSTGRES_USER: ${DB_USERNAME:-ezship}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - ezship-dbdata:/var/lib/postgresql/data
+    networks:
+      - ezship-network
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: ezship-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    networks:
+      - ezship-network
+
+  # Queue Worker
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ezship-queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan queue:work --sleep=3 --tries=3
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - ezship-network
+    depends_on:
+      - db
+      - redis
+
+  # Scheduler
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ezship-scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: /bin/sh -c "while true; do php artisan schedule:run --verbose --no-interaction & sleep 60; done"
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - ezship-network
+    depends_on:
+      - db
+      - redis
+
+# Networks
+networks:
+  ezship-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  ezship-dbdata:
+    driver: local

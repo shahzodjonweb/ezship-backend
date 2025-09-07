@@ -1,0 +1,134 @@
+name: Docker Deploy
+
+on:
+  push:
+    branches: [ master, dev ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=sha
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Set deployment variables
+      id: vars
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+          echo "DEPLOY_PATH=/var/www/app.ezship.app" >> $GITHUB_OUTPUT
+          echo "DEPLOY_URL=https://app.ezship.app" >> $GITHUB_OUTPUT
+          echo "CONTAINER_NAME=ezship-prod" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=latest" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+          echo "DEPLOY_PATH=/var/www/dev.ezship.app" >> $GITHUB_OUTPUT
+          echo "DEPLOY_URL=https://dev.ezship.app" >> $GITHUB_OUTPUT
+          echo "CONTAINER_NAME=ezship-dev" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=dev" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          cd ${{ steps.vars.outputs.DEPLOY_PATH }}
+          
+          # Create .env file from GitHub Secret
+          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+            cat > .env << 'EOF'
+          ${{ secrets.PRODUCTION_ENV_FILE }}
+          EOF
+          else
+            cat > .env << 'EOF'
+          ${{ secrets.DEVELOPMENT_ENV_FILE }}
+          EOF
+          fi
+          
+          # Set proper permissions
+          chmod 600 .env
+          
+          # Pull latest image
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.IMAGE_TAG }}
+          
+          # Update docker-compose to use the new image
+          export GITHUB_REPOSITORY=${{ github.repository }}
+          export DB_PASSWORD=$(grep DB_PASSWORD .env | cut -d '=' -f2)
+          
+          # Stop and remove old containers
+          docker-compose down
+          
+          # Start new containers
+          docker-compose up -d
+          
+          # Run migrations
+          docker-compose exec -T app php artisan migrate --force
+          
+          # Run initial setup
+          docker-compose exec -T app php artisan initial:setup || true
+          
+          # Clear caches
+          docker-compose exec -T app php artisan config:cache
+          docker-compose exec -T app php artisan route:cache
+          docker-compose exec -T app php artisan view:cache
+          
+          # Restart queue workers
+          docker-compose exec -T app php artisan queue:restart || true
+          
+          echo "Deployment completed to ${{ steps.vars.outputs.DEPLOY_URL }}"
+
+    - name: Health Check
+      run: |
+        sleep 30
+        response=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.vars.outputs.DEPLOY_URL }} || echo "000")
+        if [ $response -eq 200 ] || [ $response -eq 301 ] || [ $response -eq 302 ]; then
+          echo "✅ Site is responding with status code: $response"
+        else
+          echo "⚠️ Site returned status code: $response"
+        fi

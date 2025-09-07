@@ -1,0 +1,159 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ master, dev ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set deployment variables
+      id: vars
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          if [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+            echo "DEPLOY_PATH=/var/www/app.ezship.app" >> $GITHUB_OUTPUT
+            echo "DEPLOY_URL=https://app.ezship.app" >> $GITHUB_OUTPUT
+            echo "DEPLOY_ENV=production" >> $GITHUB_OUTPUT
+            echo "GIT_BRANCH=master" >> $GITHUB_OUTPUT
+          else
+            echo "DEPLOY_PATH=/var/www/dev.ezship.app" >> $GITHUB_OUTPUT
+            echo "DEPLOY_URL=https://dev.ezship.app" >> $GITHUB_OUTPUT
+            echo "DEPLOY_ENV=development" >> $GITHUB_OUTPUT
+            echo "GIT_BRANCH=dev" >> $GITHUB_OUTPUT
+          fi
+        elif [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+          echo "DEPLOY_PATH=/var/www/app.ezship.app" >> $GITHUB_OUTPUT
+          echo "DEPLOY_URL=https://app.ezship.app" >> $GITHUB_OUTPUT
+          echo "DEPLOY_ENV=production" >> $GITHUB_OUTPUT
+          echo "GIT_BRANCH=master" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+          echo "DEPLOY_PATH=/var/www/dev.ezship.app" >> $GITHUB_OUTPUT
+          echo "DEPLOY_URL=https://dev.ezship.app" >> $GITHUB_OUTPUT
+          echo "DEPLOY_ENV=development" >> $GITHUB_OUTPUT
+          echo "GIT_BRANCH=dev" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Set Environment File
+      id: envfile
+      run: |
+        if [[ "${{ steps.vars.outputs.DEPLOY_ENV }}" == "production" ]]; then
+          echo "ENV_CONTENT<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ secrets.PRODUCTION_ENV_FILE }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "ENV_CONTENT<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ secrets.DEVELOPMENT_ENV_FILE }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Deploy to Server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          echo "========================================="
+          echo "Deploying to: ${{ steps.vars.outputs.DEPLOY_URL }}"
+          echo "Environment: ${{ steps.vars.outputs.DEPLOY_ENV }}"
+          echo "Path: ${{ steps.vars.outputs.DEPLOY_PATH }}"
+          echo "Branch: ${{ steps.vars.outputs.GIT_BRANCH }}"
+          echo "========================================="
+          
+          # Navigate to project directory
+          cd ${{ steps.vars.outputs.DEPLOY_PATH }}
+          
+          # Put application in maintenance mode
+          php artisan down --retry=60
+          
+          # Backup current .env file
+          if [ -f .env ]; then
+            cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+          fi
+          
+          # Create new .env file from GitHub Secret
+          cat > .env << 'ENV_FILE_CONTENT'
+          ${{ steps.envfile.outputs.ENV_CONTENT }}
+          ENV_FILE_CONTENT
+          
+          # Pull latest code
+          git fetch origin ${{ steps.vars.outputs.GIT_BRANCH }}
+          git reset --hard origin/${{ steps.vars.outputs.GIT_BRANCH }}
+          
+          # Install/update composer dependencies
+          composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+          
+          # Run database migrations
+          php artisan migrate --force
+          
+          # Run initial setup to create credentials if needed
+          php artisan initial:setup || true
+          
+          # Clear and rebuild caches
+          php artisan config:clear
+          php artisan cache:clear
+          php artisan route:clear
+          php artisan view:clear
+          
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          php artisan optimize
+          
+          # Restart queue workers (if using)
+          php artisan queue:restart
+          
+          # Set proper permissions
+          chmod -R 755 storage bootstrap/cache
+          chown -R www-data:www-data storage bootstrap/cache
+          chmod 600 .env
+          chown www-data:www-data .env
+          
+          # Bring application back online
+          php artisan up
+          
+          echo "========================================="
+          echo "Deployment completed successfully!"
+          echo "Site: ${{ steps.vars.outputs.DEPLOY_URL }}"
+          echo "========================================="
+
+    - name: Verify Deployment
+      run: |
+        echo "Waiting for site to be available..."
+        sleep 10
+        response=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.vars.outputs.DEPLOY_URL }})
+        if [ $response -eq 200 ] || [ $response -eq 301 ] || [ $response -eq 302 ]; then
+          echo "✅ Site is responding with status code: $response"
+        else
+          echo "⚠️ Site returned status code: $response"
+          exit 1
+        fi
+
+    - name: Notify Slack
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: |
+          Deployment to ${{ steps.vars.outputs.DEPLOY_URL }} ${{ job.status }}
+          Branch: ${{ steps.vars.outputs.GIT_BRANCH }}
+          Commit: ${{ github.sha }}
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      continue-on-error: true
