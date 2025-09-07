@@ -146,14 +146,3 @@ jobs:
           exit 1
         fi
 
-    - name: Notify Slack
-      if: always()
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        text: |
-          Deployment to ${{ steps.vars.outputs.DEPLOY_URL }} ${{ job.status }}
-          Branch: ${{ steps.vars.outputs.GIT_BRANCH }}
-          Commit: ${{ github.sha }}
-        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-      continue-on-error: true
