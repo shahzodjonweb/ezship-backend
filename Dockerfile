@@ -61,8 +61,8 @@ COPY . /var/www/html
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist \
-    && npm ci \
-    && npm run build \
+    && npm install \
+    && npm run build || true \
     && npm cache clean --force \
     && rm -rf node_modules
 

@@ -86,16 +86,9 @@ jobs:
     - name: Run Migrations
       run: php artisan migrate --force
 
-    - name: Run Tests with Coverage
-      run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+    - name: Run Tests
+      run: vendor/bin/phpunit
 
-    - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
 
   lint:
     runs-on: ubuntu-latest
@@ -117,6 +110,9 @@ jobs:
       run: vendor/bin/phpcs --standard=PSR12 app/
       continue-on-error: true
 
+    - name: Install PHPStan
+      run: composer require --dev phpstan/phpstan
+      
     - name: Run PHPStan
       run: vendor/bin/phpstan analyse app/ --level=5
       continue-on-error: true
