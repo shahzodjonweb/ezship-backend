@@ -3,19 +3,42 @@ set -e
 
 echo "Starting EzShip Application..."
 
-# Wait for database to be ready
-echo "Waiting for database..."
-while ! nc -z postgres 5432; do
-  sleep 1
-done
-echo "Database is ready!"
+# Check if we're running in docker-compose environment
+if [ -n "$DB_HOST" ]; then
+  # Use environment variables if set
+  DB_HOST="${DB_HOST:-127.0.0.1}"
+  REDIS_HOST="${REDIS_HOST:-127.0.0.1}"
+else
+  # Use docker-compose service names
+  DB_HOST="postgres"
+  REDIS_HOST="redis"
+fi
 
-# Wait for Redis to be ready
-echo "Waiting for Redis..."
-while ! nc -z redis 6379; do
+# Wait for database to be ready (with timeout)
+echo "Waiting for database at $DB_HOST..."
+WAIT_COUNT=0
+while ! nc -z $DB_HOST 5432 2>/dev/null; do
+  WAIT_COUNT=$((WAIT_COUNT + 1))
+  if [ $WAIT_COUNT -gt 30 ]; then
+    echo "Warning: Database connection timeout, proceeding anyway..."
+    break
+  fi
   sleep 1
 done
-echo "Redis is ready!"
+echo "Database check complete!"
+
+# Wait for Redis to be ready (with timeout)
+echo "Waiting for Redis at $REDIS_HOST..."
+WAIT_COUNT=0
+while ! nc -z $REDIS_HOST 6379 2>/dev/null; do
+  WAIT_COUNT=$((WAIT_COUNT + 1))
+  if [ $WAIT_COUNT -gt 30 ]; then
+    echo "Warning: Redis connection timeout, proceeding anyway..."
+    break
+  fi
+  sleep 1
+done
+echo "Redis check complete!"
 
 # Run migrations
 echo "Running migrations..."

@@ -81,5 +81,5 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Make entrypoint optional - only run if file exists
+ENTRYPOINT ["/bin/sh", "-c", "if [ -f /usr/local/bin/entrypoint.sh ]; then exec /usr/local/bin/entrypoint.sh /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf; else exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf; fi"]
