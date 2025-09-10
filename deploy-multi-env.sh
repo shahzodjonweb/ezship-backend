@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-GITHUB_REPO="https://github.com/YOUR_USERNAME/ezship-backend.git"
+GITHUB_REPO="https://github.com/shahzodjonweb/ezship-backend.git"
 EMAIL="admin@ezship.app"
 
 # Function to print colored output

@@ -12,7 +12,7 @@ echo "======================================"
 # Variables (update these)
 DOMAIN="ezship.app"
 EMAIL="admin@ezship.app"
-GITHUB_REPO="https://github.com/YOUR_USERNAME/ezship-backend.git"
+GITHUB_REPO="https://github.com/shahzodjonweb/ezship-backend.git"
 
 # Colors for output
 RED='\033[0;31m'

@@ -13,7 +13,7 @@ echo "======================================"
 DOMAIN="ezship.app"
 SERVER_USER="www-data"
 APP_DIR="/var/www/ezship"
-REPO_URL="https://github.com/yourusername/ezship-backend.git"  # Update this
+REPO_URL="https://github.com/shahzodjonweb/ezship-backend.git"
 DB_NAME="ezship_production"
 DB_USER="ezship_user"
 DB_PASS="CHANGE_THIS_STRONG_PASSWORD"  # Update this
