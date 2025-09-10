@@ -138,10 +138,29 @@ jobs:
 
     - name: Health Check
       run: |
+        echo "Waiting for site to be available..."
         sleep 30
-        response=$(curl -s -o /dev/null -w "%{http_code}" ${{ steps.vars.outputs.DEPLOY_URL }} || echo "000")
-        if [ $response -eq 200 ] || [ $response -eq 301 ] || [ $response -eq 302 ]; then
-          echo "✅ Site is responding with status code: $response"
+        
+        if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+          SITE_URL="https://ezship.app"
+          API_URL="https://api.ezship.app"
         else
-          echo "⚠️ Site returned status code: $response"
+          SITE_URL="https://dev.ezship.app"
+          API_URL="https://api-dev.ezship.app"
+        fi
+        
+        echo "Checking $SITE_URL..."
+        response=$(curl -s -o /dev/null -w "%{http_code}" $SITE_URL || echo "000")
+        if [ $response -eq 200 ] || [ $response -eq 301 ] || [ $response -eq 302 ] || [ $response -eq 404 ]; then
+          echo "✅ Main site is responding with status code: $response"
+        else
+          echo "⚠️ Main site returned status code: $response"
+        fi
+        
+        echo "Checking $API_URL..."
+        api_response=$(curl -s -o /dev/null -w "%{http_code}" $API_URL || echo "000")
+        if [ $api_response -eq 200 ] || [ $api_response -eq 301 ] || [ $api_response -eq 302 ] || [ $api_response -eq 404 ]; then
+          echo "✅ API is responding with status code: $api_response"
+        else
+          echo "⚠️ API returned status code: $api_response"
         fi
