@@ -40,9 +40,13 @@ while ! nc -z $REDIS_HOST 6379 2>/dev/null; do
 done
 echo "Redis check complete!"
 
-# Run migrations
-echo "Running migrations..."
-php artisan migrate --force
+# Run migrations (only if database is configured)
+if [ "$DB_CONNECTION" = "pgsql" ] || [ "$DB_CONNECTION" = "mysql" ]; then
+  echo "Running migrations..."
+  php artisan migrate --force || echo "Migration skipped or failed"
+else
+  echo "Skipping migrations (no database configured)"
+fi
 
 # Clear and cache config
 echo "Optimizing application..."

@@ -30,7 +30,9 @@ RUN docker-php-ext-configure gd \
 RUN docker-php-ext-install \
     pdo \
     pdo_pgsql \
+    pdo_mysql \
     pgsql \
+    mysqli \
     gd \
     zip \
     bcmath \
@@ -59,12 +61,29 @@ FROM base AS production
 # Copy application files
 COPY . /var/www/html
 
+# Copy .env for production if it doesn't exist
+RUN if [ ! -f /var/www/html/.env ]; then \
+    cp /var/www/html/.env.production /var/www/html/.env || \
+    cp /var/www/html/.env.example /var/www/html/.env; \
+    fi
+
+# Set default database configuration
+RUN echo "DB_CONNECTION=pgsql" >> /var/www/html/.env && \
+    echo "DB_HOST=127.0.0.1" >> /var/www/html/.env && \
+    echo "DB_PORT=5432" >> /var/www/html/.env && \
+    echo "CACHE_DRIVER=array" >> /var/www/html/.env && \
+    echo "SESSION_DRIVER=array" >> /var/www/html/.env && \
+    echo "QUEUE_CONNECTION=sync" >> /var/www/html/.env
+
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist \
     && npm install \
     && npm run build || true \
     && npm cache clean --force \
     && rm -rf node_modules
+
+# Generate application key
+RUN php artisan key:generate || true
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
