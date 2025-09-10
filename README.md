@@ -64,3 +64,10 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+---
+
+## EzShip Deployment Status
+- **Production Environment**: https://ezship.app | https://api.ezship.app
+- **Development Environment**: https://dev.ezship.app | https://api-dev.ezship.app
+- **Last CI/CD Test**: January 10, 2025 - Production Deployment ✅
