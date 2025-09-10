@@ -85,6 +85,9 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progre
 # Generate application key
 RUN php artisan key:generate || true
 
+# Create necessary directories
+RUN mkdir -p /var/log/supervisor /var/log/php-fpm /var/log/nginx /var/log/php
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
