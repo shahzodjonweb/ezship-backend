@@ -1,126 +1,105 @@
 version: '3.8'
 
 services:
-  app:
+  app-dev:
     build:
       context: .
       dockerfile: Dockerfile
       target: production
-    image: ezship:latest
-    container_name: ezship-app
+    image: ezship-dev:latest
+    container_name: ezship-app-dev
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
       - ./storage:/var/www/html/storage
       - ./public/uploads:/var/www/html/public/uploads
     environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
+      - APP_ENV=development
+      - APP_DEBUG=true
+      - APP_URL=https://dev.ezship.app
+      - API_URL=https://api-dev.ezship.app
     depends_on:
-      - postgres
-      - redis
+      - postgres-dev
+      - redis-dev
     networks:
-      - ezship-network
+      - ezship-dev-network
     ports:
-      - "8080:80"
+      - "8081:80"
 
-  postgres:
+  postgres-dev:
     image: postgres:15-alpine
-    container_name: ezship-postgres
+    container_name: ezship-postgres-dev
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-ezship_production}
+      POSTGRES_DB: ${DB_DATABASE:-ezship_development}
       POSTGRES_USER: ${DB_USERNAME:-ezship_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-dev-data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
-      - ezship-network
+      - ezship-dev-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-ezship_user}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  redis:
+  redis-dev:
     image: redis:7-alpine
-    container_name: ezship-redis
+    container_name: ezship-redis-dev
     restart: unless-stopped
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
     volumes:
-      - redis-data:/data
+      - redis-dev-data:/data
     ports:
-      - "6379:6379"
+      - "6380:6379"
     networks:
-      - ezship-network
+      - ezship-dev-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  nginx:
+  nginx-dev:
     image: nginx:alpine
-    container_name: ezship-nginx
+    container_name: ezship-nginx-dev
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8082:80"
+      - "8443:443"
     volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/dev.conf:/etc/nginx/nginx.conf:ro
       - ./docker/nginx/sites:/etc/nginx/sites-available:ro
       - ./public:/var/www/html/public:ro
       - ./docker/nginx/ssl:/etc/nginx/ssl:ro
-      - nginx-cache:/var/cache/nginx
+      - nginx-dev-cache:/var/cache/nginx
     depends_on:
-      - app
+      - app-dev
     networks:
-      - ezship-network
+      - ezship-dev-network
 
-  # Optional: Mailhog for local email testing
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: ezship-mailhog
+    container_name: ezship-mailhog-dev
     restart: unless-stopped
     ports:
       - "1025:1025"
       - "8025:8025"
     networks:
-      - ezship-network
-    profiles:
-      - dev
-
-  # Optional: pgAdmin for database management
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: ezship-pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@ezship.app}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    networks:
-      - ezship-network
-    profiles:
-      - tools
+      - ezship-dev-network
 
 networks:
-  ezship-network:
+  ezship-dev-network:
     driver: bridge
 
 volumes:
-  postgres-data:
+  postgres-dev-data:
     driver: local
-  redis-data:
+  redis-dev-data:
     driver: local
-  pgadmin-data:
-    driver: local
-  nginx-cache:
+  nginx-dev-cache:
     driver: local

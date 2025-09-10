@@ -1,30 +1,40 @@
-#!/bin/bash
-
+#!/bin/sh
 set -e
+
+echo "Starting EzShip Application..."
 
 # Wait for database to be ready
 echo "Waiting for database..."
-until PGPASSWORD=$DB_PASSWORD psql -h "$DB_HOST" -U "$DB_USERNAME" -d "$DB_DATABASE" -c '\q' 2>/dev/null; do
-  >&2 echo "Database is unavailable - sleeping"
+while ! nc -z postgres 5432; do
   sleep 1
 done
+echo "Database is ready!"
 
->&2 echo "Database is up - executing command"
+# Wait for Redis to be ready
+echo "Waiting for Redis..."
+while ! nc -z redis 6379; do
+  sleep 1
+done
+echo "Redis is ready!"
 
 # Run migrations
+echo "Running migrations..."
 php artisan migrate --force
 
-# Run initial setup if credentials don't exist
-php artisan initial:setup || true
-
 # Clear and cache config
+echo "Optimizing application..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan optimize
 
-# Create storage link
+# Create storage symlink if it doesn't exist
 php artisan storage:link || true
 
-# Start PHP-FPM
-exec php-fpm
+# Set permissions
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+echo "Application ready!"
+
+# Start supervisor
+exec "$@"

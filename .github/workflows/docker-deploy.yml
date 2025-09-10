@@ -59,15 +59,19 @@ jobs:
       id: vars
       run: |
         if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
-          echo "DEPLOY_PATH=/var/www/app.ezship.app" >> $GITHUB_OUTPUT
-          echo "DEPLOY_URL=https://app.ezship.app" >> $GITHUB_OUTPUT
-          echo "CONTAINER_NAME=ezship-prod" >> $GITHUB_OUTPUT
-          echo "IMAGE_TAG=latest" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-          echo "DEPLOY_PATH=/var/www/dev.ezship.app" >> $GITHUB_OUTPUT
+          echo "ENV_TYPE=prod" >> $GITHUB_OUTPUT
+          echo "COMPOSE_FILE=docker-compose.prod.yml" >> $GITHUB_OUTPUT
+          echo "ENV_FILE=.env.prod" >> $GITHUB_OUTPUT
+          echo "CONTAINER_NAME=app" >> $GITHUB_OUTPUT
+          echo "DEPLOY_URL=https://ezship.app" >> $GITHUB_OUTPUT
+          echo "API_URL=https://api.ezship.app" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref }}" == "refs/heads/dev" || "${{ github.ref }}" == "refs/heads/develop" ]]; then
+          echo "ENV_TYPE=dev" >> $GITHUB_OUTPUT
+          echo "COMPOSE_FILE=docker-compose.dev.yml" >> $GITHUB_OUTPUT
+          echo "ENV_FILE=.env.dev" >> $GITHUB_OUTPUT
+          echo "CONTAINER_NAME=app-dev" >> $GITHUB_OUTPUT
           echo "DEPLOY_URL=https://dev.ezship.app" >> $GITHUB_OUTPUT
-          echo "CONTAINER_NAME=ezship-dev" >> $GITHUB_OUTPUT
-          echo "IMAGE_TAG=dev" >> $GITHUB_OUTPUT
+          echo "API_URL=https://api-dev.ezship.app" >> $GITHUB_OUTPUT
         fi
 
     - name: Deploy via SSH
@@ -78,50 +82,59 @@ jobs:
         key: ${{ secrets.SERVER_SSH_KEY }}
         port: ${{ secrets.SERVER_PORT || 22 }}
         script: |
-          cd ${{ steps.vars.outputs.DEPLOY_PATH }}
+          # Navigate to deployment directory
+          cd /opt/ezship
           
-          # Create .env file from GitHub Secret
+          # Pull latest code
           if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
-            cat > .env << 'EOF'
+            git checkout master && git pull origin master
+          else
+            git checkout develop && git pull origin develop || git pull origin dev
+          fi
+          
+          # Create environment file from GitHub Secret
+          if [[ "${{ steps.vars.outputs.ENV_TYPE }}" == "prod" ]]; then
+            cat > ${{ steps.vars.outputs.ENV_FILE }} << 'EOF'
           ${{ secrets.PRODUCTION_ENV_FILE }}
           EOF
           else
-            cat > .env << 'EOF'
+            cat > ${{ steps.vars.outputs.ENV_FILE }} << 'EOF'
           ${{ secrets.DEVELOPMENT_ENV_FILE }}
           EOF
           fi
           
           # Set proper permissions
-          chmod 600 .env
+          chmod 600 ${{ steps.vars.outputs.ENV_FILE }}
           
-          # Pull latest image
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.IMAGE_TAG }}
+          # Copy env file for Docker
+          cp ${{ steps.vars.outputs.ENV_FILE }} .env
           
-          # Update docker-compose to use the new image
-          export GITHUB_REPOSITORY=${{ github.repository }}
-          export DB_PASSWORD=$(grep DB_PASSWORD .env | cut -d '=' -f2)
+          # Build and restart containers
+          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} build --no-cache
+          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} down
+          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} up -d
           
-          # Stop and remove old containers
-          docker-compose down
-          
-          # Start new containers
-          docker-compose up -d
+          # Wait for containers to be ready
+          sleep 10
           
           # Run migrations
-          docker-compose exec -T app php artisan migrate --force
+          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan migrate --force
           
-          # Run initial setup
-          docker-compose exec -T app php artisan initial:setup || true
+          # Clear and rebuild caches for production
+          if [[ "${{ steps.vars.outputs.ENV_TYPE }}" == "prod" ]]; then
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan config:cache
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan route:cache
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan view:cache
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan optimize
+          else
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan config:clear
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan cache:clear
+          fi
           
-          # Clear caches
-          docker-compose exec -T app php artisan config:cache
-          docker-compose exec -T app php artisan route:cache
-          docker-compose exec -T app php artisan view:cache
+          # Clean up Docker resources
+          docker system prune -f
           
-          # Restart queue workers
-          docker-compose exec -T app php artisan queue:restart || true
-          
-          echo "Deployment completed to ${{ steps.vars.outputs.DEPLOY_URL }}"
+          echo "Deployment completed to ${{ steps.vars.outputs.DEPLOY_URL }} and ${{ steps.vars.outputs.API_URL }}"
 
     - name: Health Check
       run: |
