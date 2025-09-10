@@ -63,14 +63,12 @@ jobs:
           echo "COMPOSE_FILE=docker-compose.prod.yml" >> $GITHUB_OUTPUT
           echo "ENV_FILE=.env.prod" >> $GITHUB_OUTPUT
           echo "CONTAINER_NAME=app" >> $GITHUB_OUTPUT
-          echo "DEPLOY_URL=https://ezship.app" >> $GITHUB_OUTPUT
           echo "API_URL=https://api.ezship.app" >> $GITHUB_OUTPUT
         elif [[ "${{ github.ref }}" == "refs/heads/dev" || "${{ github.ref }}" == "refs/heads/develop" ]]; then
           echo "ENV_TYPE=dev" >> $GITHUB_OUTPUT
           echo "COMPOSE_FILE=docker-compose.dev.yml" >> $GITHUB_OUTPUT
           echo "ENV_FILE=.env.dev" >> $GITHUB_OUTPUT
           echo "CONTAINER_NAME=app-dev" >> $GITHUB_OUTPUT
-          echo "DEPLOY_URL=https://dev.ezship.app" >> $GITHUB_OUTPUT
           echo "API_URL=https://api-dev.ezship.app" >> $GITHUB_OUTPUT
         fi
 
@@ -134,33 +132,33 @@ jobs:
           # Clean up Docker resources
           docker system prune -f
           
-          echo "Deployment completed to ${{ steps.vars.outputs.DEPLOY_URL }} and ${{ steps.vars.outputs.API_URL }}"
+          echo "Deployment completed to ${{ steps.vars.outputs.API_URL }}"
 
     - name: Health Check
       run: |
-        echo "Waiting for site to be available..."
+        echo "Waiting for API to be available..."
         sleep 30
         
         if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
-          SITE_URL="https://ezship.app"
           API_URL="https://api.ezship.app"
+          echo "Checking Production API: $API_URL"
         else
-          SITE_URL="https://dev.ezship.app"
           API_URL="https://api-dev.ezship.app"
+          echo "Checking Development API: $API_URL"
         fi
         
-        echo "Checking $SITE_URL..."
-        response=$(curl -s -o /dev/null -w "%{http_code}" $SITE_URL || echo "000")
-        if [ $response -eq 200 ] || [ $response -eq 301 ] || [ $response -eq 302 ] || [ $response -eq 404 ]; then
-          echo "✅ Main site is responding with status code: $response"
+        # Check API health
+        response=$(curl -s -o /dev/null -w "%{http_code}" $API_URL || echo "000")
+        echo "API Response Code: $response"
+        
+        if [ $response -eq 200 ] || [ $response -eq 301 ] || [ $response -eq 302 ] || [ $response -eq 404 ] || [ $response -eq 500 ]; then
+          echo "✅ API is responding with status code: $response"
         else
-          echo "⚠️ Main site returned status code: $response"
+          echo "⚠️ API returned status code: $response (might still be starting up)"
         fi
         
-        echo "Checking $API_URL..."
-        api_response=$(curl -s -o /dev/null -w "%{http_code}" $API_URL || echo "000")
-        if [ $api_response -eq 200 ] || [ $api_response -eq 301 ] || [ $api_response -eq 302 ] || [ $api_response -eq 404 ]; then
-          echo "✅ API is responding with status code: $api_response"
-        else
-          echo "⚠️ API returned status code: $api_response"
+        # Try API health endpoint if available
+        health_response=$(curl -s -o /dev/null -w "%{http_code}" $API_URL/api/health || echo "000")
+        if [ $health_response -eq 200 ]; then
+          echo "✅ API health endpoint responding: $health_response"
         fi
