@@ -56,7 +56,7 @@ services:
     image: redis:7-alpine
     container_name: ezship-redis-prod
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    command: redis-server --appendonly yes
     volumes:
       - redis-prod-data:/data
     expose:
@@ -78,9 +78,8 @@ services:
       - "443:443"
     volumes:
       - ./docker/nginx/prod.conf:/etc/nginx/nginx.conf:ro
-      - ./docker/nginx/sites:/etc/nginx/sites-available:ro
       - ./public:/var/www/html/public:ro
-      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      - ./storage/app/public:/var/www/html/public/storage:ro
       - nginx-cache:/var/cache/nginx
     depends_on:
       - app

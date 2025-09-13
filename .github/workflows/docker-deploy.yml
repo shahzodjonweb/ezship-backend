@@ -107,8 +107,12 @@ jobs:
           # Copy env file for Docker
           cp ${{ steps.vars.outputs.ENV_FILE }} .env
           
-          # Ensure DB_HOST points to postgres container
+          # Ensure DB_HOST and REDIS_HOST point to container names
           sed -i 's/^DB_HOST=.*/DB_HOST=postgres/' .env
+          sed -i 's/^REDIS_HOST=.*/REDIS_HOST=redis/' .env
+          
+          # If REDIS_HOST doesn't exist, add it
+          grep -q "^REDIS_HOST=" .env || echo "REDIS_HOST=redis" >> .env
           
           # Stop any service using port 80
           sudo systemctl stop nginx 2>/dev/null || true
@@ -176,9 +180,14 @@ jobs:
           echo "Checking Development API: $API_URL"
         fi
         
-        # Check API health
-        response=$(curl -s -o /dev/null -w "%{http_code}" $API_URL || echo "000")
+        # Check API health with more detail
+        echo "Testing API URL: $API_URL"
+        response=$(curl -s -o /dev/null -w "%{http_code}" -L $API_URL || echo "000")
         echo "API Response Code: $response"
+        
+        # Get actual response body for debugging
+        echo "API Response Body:"
+        curl -s -L $API_URL | head -100 || echo "Failed to get response"
         
         if [ $response -eq 200 ] || [ $response -eq 301 ] || [ $response -eq 302 ] || [ $response -eq 404 ] || [ $response -eq 500 ]; then
           echo "✅ API is responding with status code: $response"
