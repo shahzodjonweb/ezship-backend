@@ -65,13 +65,13 @@ echo "Application ready!"
 
 # Choose supervisor config based on environment
 # Check if we're running with external nginx (docker-compose)
-if [ -n "$EXTERNAL_NGINX" ] || [ -f /.dockerenv ]; then
-  echo "Using app-only supervisor configuration (external nginx)..."
+if [ -n "$EXTERNAL_NGINX" ]; then
+  echo "Using app-only supervisor configuration (external nginx detected via env var)..."
   exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.app-only.conf
 elif [ -f /etc/supervisor/conf.d/supervisord.prod.conf ] && [ "$APP_ENV" = "production" ]; then
   echo "Using production supervisor configuration..."
   exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.prod.conf
 else
   echo "Using default supervisor configuration..."
-  exec "$@"
+  exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 fi

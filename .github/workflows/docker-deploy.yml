@@ -124,13 +124,24 @@ jobs:
           # Wait for containers to be ready
           sleep 10
           
+          # Wait a bit more for containers to stabilize
+          sleep 15
+          
           # Check container status
+          echo "=== Container Status ==="
           docker ps -a | grep ezship
           
-          # Get logs if container is not running
+          # Always show app container logs for debugging
+          echo "=== App Container Logs ==="
+          docker logs --tail 50 ${{ steps.vars.outputs.CONTAINER_NAME }} || true
+          
+          # Check if container is running
           if ! docker ps | grep -q "${{ steps.vars.outputs.CONTAINER_NAME }}"; then
-            echo "Container not running, checking logs..."
+            echo "ERROR: App container is not running!"
+            echo "=== Full Container Logs ==="
             docker logs ${{ steps.vars.outputs.CONTAINER_NAME }} || true
+            echo "=== Container Inspect ==="
+            docker inspect ${{ steps.vars.outputs.CONTAINER_NAME }} | grep -A 10 "State" || true
           fi
           
           # Run migrations (if container is running)
