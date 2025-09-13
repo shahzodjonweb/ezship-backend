@@ -3,15 +3,21 @@ set -e
 
 echo "Starting EzShip Application..."
 
-# Check if we're running in docker-compose environment
-if [ -n "$DB_HOST" ]; then
-  # Use environment variables if set
-  DB_HOST="${DB_HOST:-127.0.0.1}"
-  REDIS_HOST="${REDIS_HOST:-127.0.0.1}"
-else
-  # Use docker-compose service names
-  DB_HOST="postgres"
-  REDIS_HOST="redis"
+# Set database and Redis hosts for docker-compose environment
+DB_HOST="${DB_HOST:-postgres}"
+REDIS_HOST="${REDIS_HOST:-redis}"
+
+# Export for PHP processes
+export DB_HOST
+export REDIS_HOST
+
+# Update .env file with correct hosts
+if [ -f /var/www/html/.env ]; then
+  sed -i "s/^DB_HOST=.*/DB_HOST=${DB_HOST}/" /var/www/html/.env
+  sed -i "s/^REDIS_HOST=.*/REDIS_HOST=${REDIS_HOST}/" /var/www/html/.env
+  
+  # Add REDIS_HOST if it doesn't exist
+  grep -q "^REDIS_HOST=" /var/www/html/.env || echo "REDIS_HOST=${REDIS_HOST}" >> /var/www/html/.env
 fi
 
 # Wait for database to be ready (with timeout)

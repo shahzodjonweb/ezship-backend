@@ -114,6 +114,12 @@ jobs:
           # If REDIS_HOST doesn't exist, add it
           grep -q "^REDIS_HOST=" .env || echo "REDIS_HOST=redis" >> .env
           
+          # Create necessary directories
+          mkdir -p storage/app/public
+          mkdir -p storage/framework/{cache,sessions,views}
+          mkdir -p storage/logs
+          mkdir -p bootstrap/cache
+          
           # Stop any service using port 80
           sudo systemctl stop nginx 2>/dev/null || true
           sudo systemctl stop apache2 2>/dev/null || true

@@ -79,7 +79,6 @@ services:
     volumes:
       - ./docker/nginx/prod.conf:/etc/nginx/nginx.conf:ro
       - ./public:/var/www/html/public:ro
-      - ./storage/app/public:/var/www/html/public/storage:ro
       - nginx-cache:/var/cache/nginx
     depends_on:
       - app
