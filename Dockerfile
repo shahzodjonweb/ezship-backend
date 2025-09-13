@@ -67,13 +67,13 @@ RUN if [ ! -f /var/www/html/.env ]; then \
     cp /var/www/html/.env.example /var/www/html/.env; \
     fi
 
-# Set default database configuration
-RUN echo "DB_CONNECTION=pgsql" >> /var/www/html/.env && \
-    echo "DB_HOST=127.0.0.1" >> /var/www/html/.env && \
-    echo "DB_PORT=5432" >> /var/www/html/.env && \
-    echo "CACHE_DRIVER=array" >> /var/www/html/.env && \
-    echo "SESSION_DRIVER=array" >> /var/www/html/.env && \
-    echo "QUEUE_CONNECTION=sync" >> /var/www/html/.env
+# Set default database configuration if not present
+RUN if ! grep -q "^DB_CONNECTION=" /var/www/html/.env 2>/dev/null; then \
+    echo "DB_CONNECTION=pgsql" >> /var/www/html/.env; fi && \
+    if ! grep -q "^DB_HOST=" /var/www/html/.env 2>/dev/null; then \
+    echo "DB_HOST=postgres" >> /var/www/html/.env; fi && \
+    if ! grep -q "^DB_PORT=" /var/www/html/.env 2>/dev/null; then \
+    echo "DB_PORT=5432" >> /var/www/html/.env; fi
 
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist \

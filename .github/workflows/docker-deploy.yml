@@ -62,13 +62,13 @@ jobs:
           echo "ENV_TYPE=prod" >> $GITHUB_OUTPUT
           echo "COMPOSE_FILE=docker-compose.prod.yml" >> $GITHUB_OUTPUT
           echo "ENV_FILE=.env.prod" >> $GITHUB_OUTPUT
-          echo "CONTAINER_NAME=app" >> $GITHUB_OUTPUT
+          echo "CONTAINER_NAME=ezship-app-prod" >> $GITHUB_OUTPUT
           echo "API_URL=https://api.ezship.app" >> $GITHUB_OUTPUT
         elif [[ "${{ github.ref }}" == "refs/heads/dev" || "${{ github.ref }}" == "refs/heads/develop" ]]; then
           echo "ENV_TYPE=dev" >> $GITHUB_OUTPUT
           echo "COMPOSE_FILE=docker-compose.dev.yml" >> $GITHUB_OUTPUT
           echo "ENV_FILE=.env.dev" >> $GITHUB_OUTPUT
-          echo "CONTAINER_NAME=app-dev" >> $GITHUB_OUTPUT
+          echo "CONTAINER_NAME=ezship-app-dev" >> $GITHUB_OUTPUT
           echo "API_URL=https://api-dev.ezship.app" >> $GITHUB_OUTPUT
         fi
 
@@ -107,7 +107,11 @@ jobs:
           # Copy env file for Docker
           cp ${{ steps.vars.outputs.ENV_FILE }} .env
           
+          # Ensure DB_HOST points to postgres container
+          sed -i 's/^DB_HOST=.*/DB_HOST=postgres/' .env
+          
           # Build and restart containers
+          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} pull
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} build --no-cache
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} down
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} up -d
