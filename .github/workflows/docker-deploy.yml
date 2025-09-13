@@ -118,9 +118,13 @@ jobs:
           sed -i 's/^DB_DATABASE=.*/DB_DATABASE=ezship_production/' .env
           sed -i 's/^DB_USERNAME=.*/DB_USERNAME=ezship_user/' .env
           
-          # Show database config for debugging
+          # Show database config for debugging (mask password)
           echo "=== Database Configuration ==="
-          grep -E "^DB_" .env | head -10
+          grep -E "^DB_" .env | sed 's/DB_PASSWORD=.*/DB_PASSWORD=***MASKED***/' | head -10
+          
+          # Extract actual DB password for docker-compose
+          export DB_PASSWORD=$(grep "^DB_PASSWORD=" .env | cut -d'=' -f2)
+          echo "DB_PASSWORD length: ${#DB_PASSWORD} characters"
           
           # Create necessary directories
           mkdir -p storage/app/public
@@ -133,10 +137,12 @@ jobs:
           sudo systemctl stop apache2 2>/dev/null || true
           sudo lsof -ti:80 | xargs sudo kill -9 2>/dev/null || true
           
-          # Build and restart containers
+          # Build and restart containers (with volume cleanup for fresh DB)
+          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} down -v || true
+          docker volume rm ezship_postgres-prod-data 2>/dev/null || true
+          
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} pull
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} build --no-cache
-          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} down
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} up -d
           
           # Wait for containers to be ready
