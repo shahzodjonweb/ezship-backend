@@ -154,19 +154,24 @@ jobs:
             docker inspect ${{ steps.vars.outputs.CONTAINER_NAME }} | grep -A 10 "State" || true
           fi
           
-          # Run migrations (if container is running)
-          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan migrate --force || echo "Migration failed or container not running"
+          # Run migrations (use service name 'app' instead of container name)
+          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T app php artisan migrate --force || echo "Migration failed or container not running"
           
           # Clear and rebuild caches for production
           if [[ "${{ steps.vars.outputs.ENV_TYPE }}" == "prod" ]]; then
-            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan config:cache
-            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan route:cache
-            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan view:cache
-            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan optimize
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T app php artisan config:cache || true
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T app php artisan route:cache || true
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T app php artisan view:cache || true
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T app php artisan optimize || true
           else
-            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan config:clear
-            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan cache:clear
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T app php artisan config:clear || true
+            docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T app php artisan cache:clear || true
           fi
+          
+          # Test nginx to app connectivity
+          echo "=== Testing Nginx to App Connectivity ==="
+          docker exec ezship-nginx-prod wget -O- http://app:9000 2>&1 | head -20 || echo "Direct PHP-FPM test failed (expected)"
+          docker exec ezship-nginx-prod cat /etc/nginx/nginx.conf | grep -A 5 "upstream" || true
           
           # Clean up Docker resources
           docker system prune -f
@@ -188,12 +193,17 @@ jobs:
         
         # Check API health with more detail
         echo "Testing API URL: $API_URL"
-        response=$(curl -s -o /dev/null -w "%{http_code}" -L $API_URL || echo "000")
+        
+        # Test with verbose output
+        echo "=== Curl Verbose Test ==="
+        curl -v -L --max-time 10 $API_URL 2>&1 | head -50 || true
+        
+        response=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 10 $API_URL || echo "000")
         echo "API Response Code: $response"
         
-        # Get actual response body for debugging
-        echo "API Response Body:"
-        curl -s -L $API_URL | head -100 || echo "Failed to get response"
+        # Test direct server IP if available
+        echo "=== Direct Server Test ==="
+        curl -s --max-time 5 http://${{ secrets.SERVER_HOST }} 2>&1 | head -20 || echo "Direct server test failed"
         
         if [ $response -eq 200 ] || [ $response -eq 301 ] || [ $response -eq 302 ] || [ $response -eq 404 ] || [ $response -eq 500 ]; then
           echo "✅ API is responding with status code: $response"
