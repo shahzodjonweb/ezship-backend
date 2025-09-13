@@ -110,6 +110,11 @@ jobs:
           # Ensure DB_HOST points to postgres container
           sed -i 's/^DB_HOST=.*/DB_HOST=postgres/' .env
           
+          # Stop any service using port 80
+          sudo systemctl stop nginx 2>/dev/null || true
+          sudo systemctl stop apache2 2>/dev/null || true
+          sudo lsof -ti:80 | xargs sudo kill -9 2>/dev/null || true
+          
           # Build and restart containers
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} pull
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} build --no-cache
