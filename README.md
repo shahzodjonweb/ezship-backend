@@ -68,7 +68,11 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 ---
 
 ## EzShip Deployment Status
+
+![Docker Deploy](https://github.com/shahzodjonweb/ezship-backend/actions/workflows/docker-deploy.yml/badge.svg)
+![CI](https://github.com/shahzodjonweb/ezship-backend/actions/workflows/ci.yml/badge.svg)
+
 - **Production Environment**: https://ezship.app | https://api.ezship.app
 - **Development Environment**: https://dev.ezship.app | https://api-dev.ezship.app
-- **Last CI/CD Test**: January 10, 2025 - Production Deployment ✅
+- **Last CI/CD Test**: January 13, 2025 - Testing deployment pipeline
 - **Repository Status**: Public (Unlimited GitHub Actions)
