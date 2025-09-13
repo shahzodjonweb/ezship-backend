@@ -114,6 +114,14 @@ jobs:
           # If REDIS_HOST doesn't exist, add it
           grep -q "^REDIS_HOST=" .env || echo "REDIS_HOST=redis" >> .env
           
+          # Ensure DB credentials match what's in docker-compose
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=ezship_production/' .env
+          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=ezship_user/' .env
+          
+          # Show database config for debugging
+          echo "=== Database Configuration ==="
+          grep -E "^DB_" .env | head -10
+          
           # Create necessary directories
           mkdir -p storage/app/public
           mkdir -p storage/framework/{cache,sessions,views}
@@ -184,26 +192,34 @@ jobs:
         sleep 30
         
         if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
-          API_URL="https://api.ezship.app"
-          echo "Checking Production API: $API_URL"
+          # Use HTTP for now until SSL is configured
+          API_URL="http://${{ secrets.SERVER_HOST }}"
+          API_URL_HTTPS="https://api.ezship.app"
+          echo "Checking Production API: $API_URL (HTTP) and $API_URL_HTTPS (HTTPS)"
         else
-          API_URL="https://api-dev.ezship.app"
-          echo "Checking Development API: $API_URL"
+          API_URL="http://${{ secrets.SERVER_HOST }}"
+          API_URL_HTTPS="https://api-dev.ezship.app"
+          echo "Checking Development API: $API_URL (HTTP) and $API_URL_HTTPS (HTTPS)"
         fi
         
         # Check API health with more detail
         echo "Testing API URL: $API_URL"
         
-        # Test with verbose output
-        echo "=== Curl Verbose Test ==="
-        curl -v -L --max-time 10 $API_URL 2>&1 | head -50 || true
+        # Test HTTP first (should work)
+        echo "=== Testing HTTP ==="
+        response_http=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 10 $API_URL || echo "000")
+        echo "HTTP Response Code: $response_http"
         
-        response=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 10 $API_URL || echo "000")
-        echo "API Response Code: $response"
+        # Show actual response
+        echo "HTTP Response Body (first 20 lines):"
+        curl -s -L --max-time 5 $API_URL 2>&1 | head -20 || echo "Failed to get response"
         
-        # Test direct server IP if available
-        echo "=== Direct Server Test ==="
-        curl -s --max-time 5 http://${{ secrets.SERVER_HOST }} 2>&1 | head -20 || echo "Direct server test failed"
+        # Test HTTPS (might fail if SSL not configured)
+        echo "=== Testing HTTPS ==="
+        response_https=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 10 $API_URL_HTTPS || echo "000")
+        echo "HTTPS Response Code: $response_https"
+        
+        response=$response_http
         
         if [ $response -eq 200 ] || [ $response -eq 301 ] || [ $response -eq 302 ] || [ $response -eq 404 ] || [ $response -eq 500 ]; then
           echo "✅ API is responding with status code: $response"

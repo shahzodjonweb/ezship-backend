@@ -36,9 +36,9 @@ services:
     container_name: ezship-postgres-prod
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-ezship_production}
-      POSTGRES_USER: ${DB_USERNAME:-ezship_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: ezship_production
+      POSTGRES_USER: ezship_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres-prod-data:/var/lib/postgresql/data
