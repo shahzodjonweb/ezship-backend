@@ -63,5 +63,11 @@ chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 echo "Application ready!"
 
-# Start supervisor
-exec "$@"
+# Choose supervisor config based on environment
+if [ -f /etc/supervisor/conf.d/supervisord.prod.conf ] && [ "$APP_ENV" = "production" ]; then
+  echo "Using production supervisor configuration..."
+  exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.prod.conf
+else
+  echo "Using default supervisor configuration..."
+  exec "$@"
+fi
