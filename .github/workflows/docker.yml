@@ -74,8 +74,8 @@ jobs:
 
     - name: Run tests in Docker
       run: |
-        docker run --rm ${{ env.IMAGE_NAME }}:test php artisan --version
-        docker run --rm ${{ env.IMAGE_NAME }}:test php artisan config:show app.name
+        docker run --rm --entrypoint php ${{ env.IMAGE_NAME }}:test artisan --version
+        docker run --rm --entrypoint php ${{ env.IMAGE_NAME }}:test artisan config:show app.name
 
     - name: Build and push
       if: github.event_name != 'pull_request' || github.event.inputs.push == 'true'
