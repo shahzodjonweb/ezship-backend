@@ -55,8 +55,24 @@ COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 # Set working directory
 WORKDIR /var/www/html
 
+# Dependency caching stage
+FROM base AS dependencies
+
+# Copy only dependency files first for better caching
+COPY composer.json composer.lock package.json package-lock.json* ./
+
+# Install PHP dependencies
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+
+# Install Node dependencies
+RUN npm ci || npm install
+
 # Production build stage
 FROM base AS production
+
+# Copy dependencies from previous stage
+COPY --from=dependencies /var/www/html/vendor /var/www/html/vendor
+COPY --from=dependencies /var/www/html/node_modules /var/www/html/node_modules
 
 # Copy application files
 COPY . /var/www/html
@@ -75,11 +91,9 @@ RUN if ! grep -q "^DB_CONNECTION=" /var/www/html/.env 2>/dev/null; then \
     if ! grep -q "^DB_PORT=" /var/www/html/.env 2>/dev/null; then \
     echo "DB_PORT=5432" >> /var/www/html/.env; fi
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist \
-    && npm install \
+# Optimize autoloader and build assets
+RUN composer dump-autoload --optimize --no-dev \
     && npm run build || true \
-    && npm cache clean --force \
     && rm -rf node_modules
 
 # Generate application key
@@ -94,7 +108,6 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Copy supervisor configuration
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/supervisor/supervisord.prod.conf /etc/supervisor/conf.d/supervisord.prod.conf
-COPY docker/supervisor/supervisord.app-only.conf /etc/supervisor/conf.d/supervisord.app-only.conf
 
 # Copy nginx configuration
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf

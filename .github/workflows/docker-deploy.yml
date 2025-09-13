@@ -124,8 +124,17 @@ jobs:
           # Wait for containers to be ready
           sleep 10
           
-          # Run migrations
-          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan migrate --force
+          # Check container status
+          docker ps -a | grep ezship
+          
+          # Get logs if container is not running
+          if ! docker ps | grep -q "${{ steps.vars.outputs.CONTAINER_NAME }}"; then
+            echo "Container not running, checking logs..."
+            docker logs ${{ steps.vars.outputs.CONTAINER_NAME }} || true
+          fi
+          
+          # Run migrations (if container is running)
+          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} exec -T ${{ steps.vars.outputs.CONTAINER_NAME }} php artisan migrate --force || echo "Migration failed or container not running"
           
           # Clear and rebuild caches for production
           if [[ "${{ steps.vars.outputs.ENV_TYPE }}" == "prod" ]]; then

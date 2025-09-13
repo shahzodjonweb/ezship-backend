@@ -16,6 +16,7 @@ services:
       - APP_DEBUG=false
       - APP_URL=https://ezship.app
       - API_URL=https://api.ezship.app
+      - EXTERNAL_NGINX=true
     depends_on:
       - postgres
       - redis
