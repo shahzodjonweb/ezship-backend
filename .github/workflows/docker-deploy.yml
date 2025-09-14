@@ -141,6 +141,9 @@ jobs:
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} down -v || true
           docker volume rm ezship_postgres-prod-data 2>/dev/null || true
           
+          # Export DB_PASSWORD for docker-compose to use
+          export DB_PASSWORD=$(grep "^DB_PASSWORD=" .env | cut -d'=' -f2)
+          
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} pull
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} build --no-cache
           docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} up -d
@@ -154,6 +157,12 @@ jobs:
           # Check container status
           echo "=== Container Status ==="
           docker ps -a | grep ezship
+          
+          # Show PostgreSQL container status and logs
+          echo "=== PostgreSQL Container Status ==="
+          docker ps -a | grep postgres || true
+          echo "=== PostgreSQL Container Logs ==="
+          docker logs --tail 20 ezship-postgres-prod 2>&1 || true
           
           # Always show app container logs for debugging
           echo "=== App Container Logs ==="

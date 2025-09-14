@@ -49,7 +49,10 @@ echo "Redis check complete!"
 # Run migrations (only if database is configured)
 if [ "$DB_CONNECTION" = "pgsql" ] || [ "$DB_CONNECTION" = "mysql" ]; then
   echo "Running migrations..."
-  php artisan migrate --force || echo "Migration skipped or failed"
+  php artisan migrate --force || {
+    echo "WARNING: Migration failed - continuing anyway"
+    echo "Database might not be ready or credentials incorrect"
+  }
 else
   echo "Skipping migrations (no database configured)"
 fi

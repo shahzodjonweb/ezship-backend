@@ -35,10 +35,12 @@ services:
     image: postgres:15-alpine
     container_name: ezship-postgres-prod
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ezship_production
       POSTGRES_USER: ezship_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-defaultpassword123}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres-prod-data:/var/lib/postgresql/data
