@@ -122,6 +122,11 @@ jobs:
           echo "=== Database Configuration ==="
           grep -E "^DB_" .env | sed 's/DB_PASSWORD=.*/DB_PASSWORD=***MASKED***/' | head -10
           
+          # Ensure Google OAuth is configured (if not present, add empty values)
+          grep -q "^GOOGLE_CLIENT_ID=" .env || echo "GOOGLE_CLIENT_ID=" >> .env
+          grep -q "^GOOGLE_CLIENT_SECRET=" .env || echo "GOOGLE_CLIENT_SECRET=" >> .env
+          grep -q "^GOOGLE_REDIRECT_URL=" .env || echo "GOOGLE_REDIRECT_URL=https://api.ezship.app/api/google/callback" >> .env
+          
           # Extract actual DB password for docker-compose
           export DB_PASSWORD=$(grep "^DB_PASSWORD=" .env | cut -d'=' -f2)
           echo "DB_PASSWORD length: ${#DB_PASSWORD} characters"
