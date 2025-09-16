@@ -137,16 +137,29 @@ jobs:
           sudo systemctl stop apache2 2>/dev/null || true
           sudo lsof -ti:80 | xargs sudo kill -9 2>/dev/null || true
           
-          # Build and restart containers (with volume cleanup for fresh DB)
-          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} down -v || true
-          docker volume rm ezship_postgres-prod-data 2>/dev/null || true
+          # Build and restart containers
+          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} down || true
           
           # Export DB_PASSWORD for docker-compose to use
           export DB_PASSWORD=$(grep "^DB_PASSWORD=" .env | cut -d'=' -f2)
           
-          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} pull
-          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} build --no-cache
-          docker-compose -f ${{ steps.vars.outputs.COMPOSE_FILE }} up -d
+          # Check if SSL is initialized
+          if [ -f "./scripts/init-ssl.sh" ] && [ ! -d "./certbot/conf/live/api.ezship.app" ]; then
+            echo "Initializing SSL certificates..."
+            sudo ./scripts/init-ssl.sh || echo "SSL initialization skipped"
+          fi
+          
+          # Use SSL compose file if certificates exist
+          if [ -d "./certbot/conf/live/api.ezship.app" ]; then
+            echo "Using SSL configuration"
+            COMPOSE_FILE="docker-compose.ssl.yml"
+          else
+            COMPOSE_FILE="${{ steps.vars.outputs.COMPOSE_FILE }}"
+          fi
+          
+          docker-compose -f $COMPOSE_FILE pull
+          docker-compose -f $COMPOSE_FILE build --no-cache
+          docker-compose -f $COMPOSE_FILE up -d
           
           # Wait for containers to be ready
           sleep 10
