@@ -17,6 +17,13 @@ services:
       - APP_URL=https://ezship.app
       - API_URL=https://api.ezship.app
       - EXTERNAL_NGINX=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=ezship_production
+      - DB_USERNAME=ezship_user
+      - DB_PASSWORD=${DB_PASSWORD:-defaultpassword123}
+      - REDIS_HOST=redis
     depends_on:
       - postgres
       - redis
