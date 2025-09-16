@@ -65,3 +65,12 @@ Route::get('admin/customers', [UserController::class , 'getCustomers'])->middlew
 Route::get('admin/customer/{id}', [UserController::class , 'getCustomerInfo'])->middleware(['auth:api','admin','verified']);
 Route::patch('admin/load/{id}/status', [LoadController::class , 'updateLoadStatus'])->middleware(['auth:api','admin','verified']);
 Route::post('admin/load/{id}/counter-rate', [LoadController::class , 'handleCounterRateAgainstCustomer'])->middleware(['auth:api','admin','verified']);
+
+// Admin Log Viewer Routes
+use App\Http\Controllers\Admin\LogViewerController;
+Route::prefix('admin/logs')->middleware(['auth:api','admin'])->group(function () {
+    Route::get('/', [LogViewerController::class, 'getLogs']);
+    Route::get('/system-info', [LogViewerController::class, 'systemInfo']);
+    Route::get('/download', [LogViewerController::class, 'download']);
+    Route::post('/clear', [LogViewerController::class, 'clear']);
+});
