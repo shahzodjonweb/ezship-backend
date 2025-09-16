@@ -22,7 +22,7 @@ services:
       - DB_PORT=5432
       - DB_DATABASE=ezship_production
       - DB_USERNAME=ezship_user
-      - DB_PASSWORD=${DB_PASSWORD:-defaultpassword123}
+      - DB_PASSWORD=ezship123
       - REDIS_HOST=redis
     depends_on:
       - postgres
@@ -42,21 +42,21 @@ services:
     image: postgres:15-alpine
     container_name: ezship-postgres-prod
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       POSTGRES_DB: ezship_production
       POSTGRES_USER: ezship_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-defaultpassword123}
+      POSTGRES_PASSWORD: ezship123
+      POSTGRES_HOST_AUTH_METHOD: md5
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres-prod-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     expose:
       - "5432"
     networks:
       - ezship-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-ezship_user}"]
+      test: ["CMD-SHELL", "pg_isready -U ezship_user -d ezship_production"]
       interval: 10s
       timeout: 5s
       retries: 5

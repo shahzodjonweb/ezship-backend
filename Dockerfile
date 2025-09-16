@@ -99,10 +99,12 @@ COPY docker/supervisor/supervisord.app-only.conf /etc/supervisor/conf.d/supervis
 # Copy nginx configuration
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
 
-# Copy entrypoint script
+# Copy entrypoint scripts
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY docker/entrypoint-auto-fix.sh /usr/local/bin/entrypoint-auto-fix.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint-auto-fix.sh
 
 EXPOSE 80
 
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# Use auto-fix entrypoint for production
+ENTRYPOINT ["/usr/local/bin/entrypoint-auto-fix.sh"]
