@@ -6,18 +6,41 @@ echo "Starting EzShip Application..."
 # Set database and Redis hosts for docker-compose environment
 DB_HOST="${DB_HOST:-postgres}"
 REDIS_HOST="${REDIS_HOST:-redis}"
+DB_CONNECTION="${DB_CONNECTION:-pgsql}"
+DB_PORT="${DB_PORT:-5432}"
+DB_DATABASE="${DB_DATABASE:-ezship_production}"
+DB_USERNAME="${DB_USERNAME:-ezship_user}"
+DB_PASSWORD="${DB_PASSWORD:-changeme}"
 
 # Export for PHP processes
 export DB_HOST
 export REDIS_HOST
+export DB_CONNECTION
+export DB_PORT
+export DB_DATABASE
+export DB_USERNAME
+export DB_PASSWORD
 
-# Update .env file with correct hosts
+# Update .env file with correct hosts and database settings
 if [ -f /var/www/html/.env ]; then
   sed -i "s/^DB_HOST=.*/DB_HOST=${DB_HOST}/" /var/www/html/.env
   sed -i "s/^REDIS_HOST=.*/REDIS_HOST=${REDIS_HOST}/" /var/www/html/.env
   
-  # Add REDIS_HOST if it doesn't exist
+  # Ensure all database settings are in .env
+  grep -q "^DB_CONNECTION=" /var/www/html/.env || echo "DB_CONNECTION=${DB_CONNECTION}" >> /var/www/html/.env
+  grep -q "^DB_HOST=" /var/www/html/.env || echo "DB_HOST=${DB_HOST}" >> /var/www/html/.env
+  grep -q "^DB_PORT=" /var/www/html/.env || echo "DB_PORT=${DB_PORT}" >> /var/www/html/.env
+  grep -q "^DB_DATABASE=" /var/www/html/.env || echo "DB_DATABASE=${DB_DATABASE}" >> /var/www/html/.env
+  grep -q "^DB_USERNAME=" /var/www/html/.env || echo "DB_USERNAME=${DB_USERNAME}" >> /var/www/html/.env
+  grep -q "^DB_PASSWORD=" /var/www/html/.env || echo "DB_PASSWORD=${DB_PASSWORD}" >> /var/www/html/.env
   grep -q "^REDIS_HOST=" /var/www/html/.env || echo "REDIS_HOST=${REDIS_HOST}" >> /var/www/html/.env
+  
+  # Update existing values
+  sed -i "s/^DB_CONNECTION=.*/DB_CONNECTION=${DB_CONNECTION}/" /var/www/html/.env
+  sed -i "s/^DB_PORT=.*/DB_PORT=${DB_PORT}/" /var/www/html/.env
+  sed -i "s/^DB_DATABASE=.*/DB_DATABASE=${DB_DATABASE}/" /var/www/html/.env
+  sed -i "s/^DB_USERNAME=.*/DB_USERNAME=${DB_USERNAME}/" /var/www/html/.env
+  sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=${DB_PASSWORD}/" /var/www/html/.env
 fi
 
 # Wait for database to be ready (with timeout)
@@ -53,6 +76,14 @@ if [ "$DB_CONNECTION" = "pgsql" ] || [ "$DB_CONNECTION" = "mysql" ]; then
     echo "WARNING: Migration failed - continuing anyway"
     echo "Database might not be ready or credentials incorrect"
   }
+  
+  # Seed admin user if migrations succeeded
+  if [ $? -eq 0 ]; then
+    echo "Seeding admin user..."
+    php artisan db:seed --class=AdminUserSeeder --force || {
+      echo "Admin user seeding skipped (may already exist)"
+    }
+  fi
 else
   echo "Skipping migrations (no database configured)"
 fi
