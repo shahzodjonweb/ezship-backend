@@ -103,12 +103,26 @@ php artisan view:cache || true
 php artisan storage:link || true
 
 # Generate Passport keys if they don't exist
-echo "Checking Passport keys..."
+echo "Checking Passport configuration..."
 if [ ! -f "/var/www/html/storage/oauth-private.key" ] || [ ! -f "/var/www/html/storage/oauth-public.key" ]; then
-    echo "Generating Passport encryption keys..."
-    php artisan passport:keys --force || true
-    chmod 600 /var/www/html/storage/oauth-private.key || true
-    chmod 644 /var/www/html/storage/oauth-public.key || true
+    echo "Installing Passport..."
+    php artisan passport:install --force --no-interaction || {
+        echo "Passport install failed, trying keys only..."
+        php artisan passport:keys --force || true
+    }
+fi
+
+# Ensure keys have correct permissions
+if [ -f "/var/www/html/storage/oauth-private.key" ]; then
+    chmod 600 /var/www/html/storage/oauth-private.key
+    chown www-data:www-data /var/www/html/storage/oauth-private.key
+    echo "✓ Private key configured"
+fi
+
+if [ -f "/var/www/html/storage/oauth-public.key" ]; then
+    chmod 644 /var/www/html/storage/oauth-public.key
+    chown www-data:www-data /var/www/html/storage/oauth-public.key
+    echo "✓ Public key configured"
 fi
 
 # Ensure log file exists and is writable
