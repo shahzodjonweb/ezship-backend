@@ -10,6 +10,8 @@ use Laravel\Socialite\Facades\Socialite;
 use App\Http\Controllers\API\QuickBooksController;
 use Illuminate\Support\Facades\Log;
 use Validator;
+use App\Exceptions\ConfigurationException;
+use App\Exceptions\AuthenticationException;
    
 class GoogleLoginController extends BaseController
 {
@@ -62,7 +64,7 @@ class GoogleLoginController extends BaseController
             // Check if Google OAuth is configured
             if (!config('services.google.client_id') || !config('services.google.client_secret')) {
                 Log::error('Google OAuth not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env');
-                return $this->sendError('Google OAuth not configured', ['error' => 'Please configure Google OAuth credentials'], 500);
+                throw new ConfigurationException('Google OAuth not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env', 400);
             }
 
             // check access token

@@ -14,6 +14,7 @@ use App\Http\Controllers\API\LocationController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\QuickBooksController;
 use App\Http\Controllers\API\PriceController;
+use App\Http\Controllers\API\ConfigurationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,11 @@ Route::get('account', [RegisterController::class, 'account'])->middleware('auth:
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('login', [RegisterController::class, 'login']);
 Route::delete('account/delete', [RegisterController::class, 'delete'])->middleware('auth:api');
+
+// Configuration Status Routes (public for monitoring)
+Route::get('config/status', [ConfigurationController::class, 'status']);
+Route::get('config/validate', [ConfigurationController::class, 'validate']);
+Route::get('config/status/{service}', [ConfigurationController::class, 'serviceStatus']);
 
 Route::post('google/login', [GoogleLoginController::class, 'login']);
 Route::get('google/status', [GoogleLoginController::class, 'checkStatus']);

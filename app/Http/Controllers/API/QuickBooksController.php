@@ -11,6 +11,8 @@ use App\Models\Credential;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use App\Exceptions\ConfigurationException;
+use App\Services\ConfigurationValidator;
 
 class QuickBooksController extends BaseController
 {

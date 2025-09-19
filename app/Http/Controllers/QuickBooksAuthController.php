@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Credential;
+use App\Exceptions\ConfigurationException;
 
 class QuickBooksAuthController extends Controller
 {
@@ -38,9 +39,7 @@ class QuickBooksAuthController extends Controller
     public function connect()
     {
         if (!$this->clientId) {
-            return response()->json([
-                'error' => 'QuickBooks client ID not configured. Please check QUICKBOOKS_BASIC_TOKEN in .env'
-            ], 500);
+            throw new ConfigurationException('QuickBooks client ID not configured. Please check QUICKBOOKS_BASIC_TOKEN in .env', 400);
         }
         
         $state = bin2hex(random_bytes(16));

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Exceptions\ConfigurationException;
+
 class  Jwt
 {
 
@@ -30,9 +32,13 @@ class  Jwt
             'sub' => $info->client_id,
         ];
 
+        if (!file_exists($info->key)) {
+            throw new ConfigurationException('Apple Sign-In key file not found: ' . $info->key, 400);
+        }
+        
         $key = openssl_pkey_get_private(file_get_contents($info->key));
         if (!$key) {
-            return false;
+            throw new ConfigurationException('Invalid Apple Sign-In private key. Please check your p8 key file', 400);
         }
 
         $segments = array();
@@ -43,7 +49,7 @@ class  Jwt
         $signature = '';
         $success = openssl_sign($signing_input, $signature, $key, 'SHA256');
         if (!$success) {
-            throw new \Exception('Encryption key fail, please check your p8 key file');
+            throw new ConfigurationException('Failed to sign JWT token. Please check your p8 key file configuration', 400);
         }
         $signature = $this->signatureFromDER($signature, 256);
 
