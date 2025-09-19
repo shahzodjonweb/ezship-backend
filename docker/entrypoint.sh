@@ -88,15 +88,24 @@ else
   echo "Skipping migrations (no database configured)"
 fi
 
-# Clear and cache config
+# Clear and cache config (with error handling)
 echo "Optimizing application..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan optimize
+php artisan config:clear || true
+php artisan route:clear || true
+php artisan view:clear || true
+php artisan cache:clear || true
+
+php artisan config:cache || true
+php artisan route:cache || true
+php artisan view:cache || true
 
 # Create storage symlink if it doesn't exist
 php artisan storage:link || true
+
+# Ensure log file exists and is writable
+touch /var/www/html/storage/logs/laravel.log || true
+chmod -R 775 /var/www/html/storage || true
+chown -R www-data:www-data /var/www/html/storage || true
 
 # Set permissions
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache

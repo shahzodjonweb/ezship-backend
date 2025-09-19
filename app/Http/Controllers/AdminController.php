@@ -465,14 +465,27 @@ class AdminController extends Controller
      */
     public function logs(Request $request)
     {
-        $logFile = storage_path('logs/laravel.log');
-        $logs = [];
-        $totalLines = 0;
-        $perPage = 100;
-        $currentPage = $request->get('page', 1);
-        
-        if (file_exists($logFile)) {
-            $fileContent = file_get_contents($logFile);
+        try {
+            $logFile = storage_path('logs/laravel.log');
+            $logs = [];
+            $totalLines = 0;
+            $perPage = 100;
+            $currentPage = $request->get('page', 1);
+            
+            if (file_exists($logFile)) {
+                // Check file size to prevent memory issues
+                $fileSize = filesize($logFile);
+                $maxSize = 50 * 1024 * 1024; // 50MB limit
+                
+                if ($fileSize > $maxSize) {
+                    // Read only the last portion of the file
+                    $handle = fopen($logFile, 'r');
+                    fseek($handle, -$maxSize, SEEK_END);
+                    $fileContent = fread($handle, $maxSize);
+                    fclose($handle);
+                } else {
+                    $fileContent = file_get_contents($logFile);
+                }
             
             // Parse log entries
             $pattern = '/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] (\w+)\.(\w+): (.+?)(?=\[(\d{4}-\d{2}-\d{2})|$)/s';
@@ -537,7 +550,11 @@ class AdminController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
         
-        return view('admin.logs', compact('pagination', 'logFileSizeFormatted', 'totalLines'));
+            return view('admin.logs', compact('pagination', 'logFileSizeFormatted', 'totalLines'));
+        } catch (\Exception $e) {
+            \Log::error('Error in logs dashboard: ' . $e->getMessage());
+            return redirect()->route('admin.dashboard')->with('error', 'Unable to load logs. Please try again.');
+        }
     }
     
     /**
