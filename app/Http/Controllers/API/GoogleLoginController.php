@@ -20,44 +20,6 @@ class GoogleLoginController extends BaseController
      *
      * @return \Illuminate\Http\Response
      */
-    /**
-     * Check Google OAuth configuration status
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function checkStatus()
-    {
-        $status = [
-            'configured' => false,
-            'client_id_set' => false,
-            'client_secret_set' => false,
-            'redirect_url' => config('services.google.redirect'),
-            'message' => ''
-        ];
-
-        if (config('services.google.client_id')) {
-            $status['client_id_set'] = true;
-            // Mask the client ID for security
-            $status['client_id_preview'] = substr(config('services.google.client_id'), 0, 10) . '...';
-        }
-
-        if (config('services.google.client_secret')) {
-            $status['client_secret_set'] = true;
-        }
-
-        if ($status['client_id_set'] && $status['client_secret_set']) {
-            $status['configured'] = true;
-            $status['message'] = 'Google OAuth is properly configured';
-        } else {
-            $missing = [];
-            if (!$status['client_id_set']) $missing[] = 'GOOGLE_CLIENT_ID';
-            if (!$status['client_secret_set']) $missing[] = 'GOOGLE_CLIENT_SECRET';
-            $status['message'] = 'Missing configuration: ' . implode(', ', $missing);
-        }
-
-        return response()->json($status);
-    }
-
     public function login(Request $request)
     {
         try {

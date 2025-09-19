@@ -37,7 +37,6 @@ Route::get('config/validate', [ConfigurationController::class, 'validate']);
 Route::get('config/status/{service}', [ConfigurationController::class, 'serviceStatus']);
 
 Route::post('google/login', [GoogleLoginController::class, 'login']);
-Route::get('google/status', [GoogleLoginController::class, 'checkStatus']);
 Route::post('apple/login', [AppleLoginController::class, 'login']);
 Route::middleware(['auth:api','verified'])->group( function () {
     Route::resource('loads', LoadController::class);
