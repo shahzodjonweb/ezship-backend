@@ -28,8 +28,5 @@ touch storage/logs/laravel.log
 chmod 664 storage/logs/laravel.log
 chown www-data:www-data storage/logs/laravel.log
 
-# Create a health check file
-echo '<?php echo json_encode(["status" => "ok", "time" => time()]); ?>' > public/health.php
-
 echo "=== DEPLOYMENT COMPLETE ==="
 echo "Site should remain accessible"
