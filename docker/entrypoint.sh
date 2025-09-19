@@ -102,6 +102,15 @@ php artisan view:cache || true
 # Create storage symlink if it doesn't exist
 php artisan storage:link || true
 
+# Generate Passport keys if they don't exist
+echo "Checking Passport keys..."
+if [ ! -f "/var/www/html/storage/oauth-private.key" ] || [ ! -f "/var/www/html/storage/oauth-public.key" ]; then
+    echo "Generating Passport encryption keys..."
+    php artisan passport:keys --force || true
+    chmod 600 /var/www/html/storage/oauth-private.key || true
+    chmod 644 /var/www/html/storage/oauth-public.key || true
+fi
+
 # Ensure log file exists and is writable
 touch /var/www/html/storage/logs/laravel.log || true
 chmod -R 775 /var/www/html/storage || true
