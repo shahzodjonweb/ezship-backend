@@ -440,6 +440,7 @@
                     <li><a href="{{ route('admin.users') }}" class="{{ request()->routeIs('admin.users*') ? 'active' : '' }}">👥 Users</a></li>
                     <li><a href="{{ route('admin.credentials') }}" class="{{ request()->routeIs('admin.credentials*') ? 'active' : '' }}">🔑 Credentials</a></li>
                     <li><a href="{{ route('admin.analytics') }}" class="{{ request()->routeIs('admin.analytics') ? 'active' : '' }}">📈 Analytics</a></li>
+                    <li><a href="{{ route('admin.logs') }}" class="{{ request()->routeIs('admin.logs*') ? 'active' : '' }}">📋 Logs</a></li>
                     <li><a href="{{ url('/') }}" target="_blank">🌐 View Site</a></li>
                 </ul>
             </nav>

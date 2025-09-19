@@ -457,4 +457,129 @@ class AdminController extends Controller
 
         return back()->with('success', "Password reset successfully for '{$user->name}'.");
     }
+
+    /**
+     * Display the logs dashboard.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function logs(Request $request)
+    {
+        $logFile = storage_path('logs/laravel.log');
+        $logs = [];
+        $totalLines = 0;
+        $perPage = 100;
+        $currentPage = $request->get('page', 1);
+        
+        if (file_exists($logFile)) {
+            $fileContent = file_get_contents($logFile);
+            
+            // Parse log entries
+            $pattern = '/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] (\w+)\.(\w+): (.+?)(?=\[(\d{4}-\d{2}-\d{2})|$)/s';
+            preg_match_all($pattern, $fileContent, $matches, PREG_SET_ORDER);
+            
+            foreach ($matches as $match) {
+                $logEntry = [
+                    'timestamp' => $match[1],
+                    'environment' => $match[2],
+                    'level' => strtoupper($match[3]),
+                    'message' => $match[4],
+                    'formatted_time' => \Carbon\Carbon::parse($match[1])->diffForHumans()
+                ];
+                
+                // Apply filters
+                if ($request->has('level') && $request->level !== 'all') {
+                    if (strtoupper($request->level) !== $logEntry['level']) {
+                        continue;
+                    }
+                }
+                
+                if ($request->has('search') && $request->search) {
+                    if (stripos($logEntry['message'], $request->search) === false) {
+                        continue;
+                    }
+                }
+                
+                // Truncate very long messages for display
+                if (strlen($logEntry['message']) > 500) {
+                    $logEntry['full_message'] = $logEntry['message'];
+                    $logEntry['message'] = substr($logEntry['message'], 0, 500) . '...';
+                    $logEntry['truncated'] = true;
+                } else {
+                    $logEntry['truncated'] = false;
+                }
+                
+                $logs[] = $logEntry;
+            }
+            
+            // Sort logs by timestamp (newest first)
+            usort($logs, function($a, $b) {
+                return strtotime($b['timestamp']) - strtotime($a['timestamp']);
+            });
+            
+            $totalLines = count($logs);
+            
+            // Manual pagination
+            $offset = ($currentPage - 1) * $perPage;
+            $logs = array_slice($logs, $offset, $perPage);
+        }
+        
+        // Get log file size
+        $logFileSize = file_exists($logFile) ? filesize($logFile) : 0;
+        $logFileSizeFormatted = $this->formatBytes($logFileSize);
+        
+        // Create pagination object
+        $pagination = new \Illuminate\Pagination\LengthAwarePaginator(
+            $logs,
+            $totalLines,
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+        
+        return view('admin.logs', compact('pagination', 'logFileSizeFormatted', 'totalLines'));
+    }
+    
+    /**
+     * Clear the log file.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function clearLogs(Request $request)
+    {
+        $logFile = storage_path('logs/laravel.log');
+        
+        if (file_exists($logFile)) {
+            // Backup old logs before clearing
+            $backupFile = storage_path('logs/laravel-' . date('Y-m-d-H-i-s') . '.log');
+            copy($logFile, $backupFile);
+            
+            // Clear the main log file
+            file_put_contents($logFile, '');
+            
+            return back()->with('success', 'Logs have been cleared successfully. A backup has been created.');
+        }
+        
+        return back()->with('error', 'Log file not found.');
+    }
+    
+    /**
+     * Format bytes to human readable format.
+     *
+     * @param int $bytes
+     * @param int $precision
+     * @return string
+     */
+    private function formatBytes($bytes, $precision = 2)
+    {
+        $units = array('B', 'KB', 'MB', 'GB', 'TB');
+        
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        
+        $bytes /= pow(1024, $pow);
+        
+        return round($bytes, $precision) . ' ' . $units[$pow];
+    }
 }

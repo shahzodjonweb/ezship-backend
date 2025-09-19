@@ -36,6 +36,10 @@ Route::prefix('admin')->group(function () {
         Route::delete('/orders/{id}', [AdminController::class, 'deleteOrder'])->name('admin.orders.delete');
         Route::get('/analytics', [AdminController::class, 'analytics'])->name('admin.analytics');
         
+        // Logs management
+        Route::get('/logs', [AdminController::class, 'logs'])->name('admin.logs');
+        Route::delete('/logs/clear', [AdminController::class, 'clearLogs'])->name('admin.logs.clear');
+        
         // User management routes
         Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
         Route::get('/users/{id}/edit', [AdminController::class, 'editUser'])->name('admin.users.edit');
