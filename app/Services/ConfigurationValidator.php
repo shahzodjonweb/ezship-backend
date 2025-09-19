@@ -11,10 +11,6 @@ class ConfigurationValidator
      * Required configuration keys grouped by service
      */
     protected static $requiredConfigs = [
-        'google' => [
-            'GOOGLE_CLIENT_ID' => 'Google OAuth Client ID',
-            'GOOGLE_CLIENT_SECRET' => 'Google OAuth Client Secret'
-        ],
         'quickbooks' => [
             'QUICKBOOKS_BASIC_TOKEN' => 'QuickBooks Basic Token',
             'QUICKBOOKS_REALM_ID' => 'QuickBooks Realm ID',

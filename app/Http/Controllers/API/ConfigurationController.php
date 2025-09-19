@@ -60,7 +60,7 @@ class ConfigurationController extends BaseController
      */
     public function serviceStatus($service)
     {
-        $validServices = ['google', 'quickbooks', 'database', 'app'];
+        $validServices = ['quickbooks', 'database', 'app'];
         
         if (!in_array($service, $validServices)) {
             return $this->sendError('Invalid service name', ['Valid services: ' . implode(', ', $validServices)], 400);
