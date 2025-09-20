@@ -31,12 +31,24 @@ class SetupInitialData extends Command
      */
     public function handle()
     {
+        // Check if QuickBooks credentials already exist
+        $existing = Credential::where('name', 'quickbooks')->first();
+        
+        if ($existing) {
+            $this->info('QuickBooks credentials already exist, skipping setup.');
+            return Command::SUCCESS;
+        }
+        
         // Create initial quickbook credentials
+        $this->info('Creating initial QuickBooks credentials...');
+        
         $credential = new Credential();
         $credential->name = 'quickbooks';
-        $credential->refresh_token = 'RT1-244-H0-176592584666rivmm8b1180jihjta3';
+        $credential->refresh_token = env('QUICKBOOKS_REFRESH_TOKEN', 'RT1-244-H0-176592584666rivmm8b1180jihjta3');
         $credential->access_token = '';
         $credential->save();
+        
+        $this->info('✓ QuickBooks credentials created successfully.');
 
         return Command::SUCCESS;
     }

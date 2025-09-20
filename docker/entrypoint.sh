@@ -84,6 +84,12 @@ if [ "$DB_CONNECTION" = "pgsql" ] || [ "$DB_CONNECTION" = "mysql" ]; then
       echo "Admin user seeding skipped (may already exist)"
     }
   fi
+  
+  # Setup initial QuickBooks credentials if not exists
+  echo "Checking QuickBooks credentials..."
+  php artisan initial:setup --force || {
+    echo "Initial setup command failed or skipped"
+  }
 else
   echo "Skipping migrations (no database configured)"
 fi
