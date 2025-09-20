@@ -41,7 +41,7 @@ class PasswordResetNotification extends Notification
     
     public function toMail($notifiable)
     {
-        $url = env('SPA_URL','https://app.shipio.app').'/reset-password?token='.$this->token.'&email='.$notifiable->email;
+        $url = env('SPA_URL','https://app.ezship.app').'/reset-password?token='.$this->token.'&email='.$notifiable->email;
         return (new MailMessage)
         ->subject('Reset Password')
         ->greeting('Hi '.$notifiable->name .',')

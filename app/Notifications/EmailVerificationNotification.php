@@ -42,7 +42,7 @@ class EmailVerificationNotification extends VerifyEmail
      */
     public function toMail($notifiable)
     {
-        $prefix = env('SPA_URL','https://app.shipio.app').'/verify-email?url=';
+        $prefix = env('SPA_URL','https://app.ezship.app').'/verify-email?url=';
         $verificationUrl = $this->verificationUrl($notifiable);
 
         return (new MailMessage)
