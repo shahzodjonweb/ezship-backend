@@ -85,8 +85,8 @@ if [ "$DB_CONNECTION" = "pgsql" ] || [ "$DB_CONNECTION" = "mysql" ]; then
     }
   fi
   
-  # Setup initial QuickBooks credentials if not exists
-  echo "Checking QuickBooks credentials..."
+  # Setup initial QuickBooks credentials (runs regardless of seeding result)
+  echo "Setting up initial QuickBooks credentials..."
   php artisan initial:setup --force || {
     echo "Initial setup command failed or skipped"
   }
